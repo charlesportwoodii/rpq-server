@@ -1,0 +1,28 @@
+{
+    "name": "rpq/queue",
+    "description": "Redis Priority Queue Server implementation in pure PHP",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Charles R. Portwood II",
+            "email": "charlesportwoodii@erianna.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "RPQ\\Queue\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^7.1",
+        "ext-redis": "^3.1.0",
+        "amphp/amp": "^2.0",
+        "symfony/console": "^3.3",
+        "rpq/client": "@dev",
+        "symfony/yaml": "^3.3",
+        "amphp/parallel": "^0.1.8"
+    },
+    "config": {
+        "bin": "rpq.php"
+    }
+}

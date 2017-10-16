@@ -1,0 +1,10 @@
+---
+redis:
+  host: "redis"
+  port: 6379
+  namespace: "rpq"
+
+queue:
+  default:
+    max_jobs: 20
+    poll_interval: 10
