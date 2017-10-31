@@ -91,7 +91,7 @@ final class Dispatcher
                     // Stream any output from the worker in realtime
                     $stream = $process->getStdout();
                     while ($chunk = yield $stream->read()) {
-                        $this->output->writeln($chunk);
+                        $this->output->writeln("[{$this->args['queueName']}][{$id}] {$chunk}");
                     }
 
                     // When the job is done, it will emit an exit status code
@@ -121,13 +121,13 @@ final class Dispatcher
         $jobDetails = $this->client->getJobById($jobId);
 
         if ($this->args['debug']) {
-            $this->output->writeln("[{$this->args['queueName']}] Job {$id} with PID: {$pid} ended with exit code {$code}");
+            $this->output->writeln("[{$this->args['queueName']}][{$id}] PID: {$pid} ended with exit code {$code}");
         }
 
         // If the job ended successfully, remove the data from redis
         if ($code === 0) {
             if ($this->args['debug']) {
-                $this->output->writeln("[{$this->args['queueName']}] Job {$id} is now complete, and has been removed from Redis");
+                $this->output->writeln("[{$this->args['queueName']}][{$id}] is now complete, and has been removed from Redis");
             }
             $this->client->getRedis()->hdel($id);
             return;
@@ -136,7 +136,7 @@ final class Dispatcher
             $retry = (int)$jobDetails['retry'];
             if ($retry > 0) {
                 if ($this->args['debug']) {
-                    $this->output->writeln("[{$this->args['queueName']}] Rescheduling Job {$id}");
+                    $this->output->writeln("[{$this->args['queueName']}][{$id}] Rescheduling Job");
                 }
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
                 $this->client->push($jobDetails['workerClass'], $jobDetails['args'], $retry - 1, (float)$jobDetails['priority'], $this->args['queueName'], $jobId);
@@ -144,7 +144,7 @@ final class Dispatcher
                 return;
             } else {
                 if ($this->args['debug']) {
-                    $this->output->writeln("[{$this->args['queueName']}] Job {$id} is now complete, and has been removed from Redis (out of retries)");
+                    $this->output->writeln("[{$this->args['queueName']}][{$id}] is now complete, and has been removed from Redis (out of retries)");
                 }
                 $this->client->getRedis()->hdel($id);
                 return;

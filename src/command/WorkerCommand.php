@@ -2,15 +2,15 @@
 
 namespace RPQ\Queue\Command;
 
+use Exception;
+use Redis;
+use RPQ\Client;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
-
-use Redis;
-use RPQ\Client;
 
 final class WorkerCommand extends Command
 {
@@ -60,8 +60,18 @@ final class WorkerCommand extends Command
         $jobId = $hash[count($hash) - 1];
         $jobDetails = $client->getJobById($jobId);
 
-        // [ do work here  ... ]
-        sleep(1);
-        return 1;
+        try {
+            $class = '\\' . $jobDetails['workerClass'];
+
+            if (!\class_exists($class)) {
+                throw new Exception("Unable to find worker class {$class}");
+            }
+            $job = new $class($jobId);
+
+            return $job->perform($jobDetails['args']);
+        } catch (Exception $e) {
+            $this->output->writeln($e->getMessage());
+        }
+        return 0;
     }
 }
