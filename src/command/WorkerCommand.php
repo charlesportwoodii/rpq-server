@@ -61,8 +61,7 @@ final class WorkerCommand extends Command
         $jobDetails = $client->getJobById($jobId);
 
         try {
-            $class = '\\' . $jobDetails['workerClass'];
-
+            $class = $jobDetails['workerClass'];
             if (!\class_exists($class)) {
                 throw new Exception("Unable to find worker class {$class}");
             }
@@ -70,7 +69,8 @@ final class WorkerCommand extends Command
 
             return $job->perform($jobDetails['args']);
         } catch (Exception $e) {
-            $this->output->writeln($e->getMessage());
+            $output->writeln($e->getMessage());
+            return -1;
         }
         return 0;
     }

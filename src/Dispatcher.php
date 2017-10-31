@@ -75,7 +75,7 @@ final class Dispatcher
                 $id = $this->client->pop();
                 if ($id !== null) {
                     // Spawn a new worker process to handle the job
-                    $command = "./rpq worker -c {$this->args['configFile']} --id {$id } --name {$this->args['queueName']}";
+                    $command = "{$_SERVER["SCRIPT_FILENAME"]} worker -c {$this->args['configFile']} --id {$id } --name {$this->args['queueName']}";                    
 
                     $process = new Process($command);
                     $process->start();
