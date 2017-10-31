@@ -1,5 +1,5 @@
 {
-    "name": "rpq/queue",
+    "name": "rpq/server",
     "description": "Redis Priority Queue Server implementation in pure PHP",
     "license": "BSD-3-Clause",
     "authors": [
