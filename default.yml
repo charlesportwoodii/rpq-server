@@ -1,4 +1,5 @@
 ---
+debug: true
 redis:
   host: "redis"
   port: 6379
@@ -7,4 +8,4 @@ redis:
 queue:
   default:
     max_jobs: 20
-    poll_interval: 10
+    poll_interval: 100

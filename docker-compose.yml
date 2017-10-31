@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   php:
-    image: charlesportwoodii/xenial-test:php71
+    image: charlesportwoodii/php:7.1
     working_dir: /var/www
     links:
       - redis:redis

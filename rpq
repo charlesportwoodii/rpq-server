@@ -1,5 +1,4 @@
-
-
+#!/usr/bin/env php
 <?php
 // Hunt for an autoloader
 $paths = [
@@ -17,11 +16,14 @@ foreach ($paths as $path) {
 
 use Symfony\Component\Console\Application;
 use RPQ\Queue\Command\QueueCommand;
+use RPQ\Queue\Command\WorkerCommand;
 
 // Starts a new Symfony\Console application with the queue command
 $app = new Application();
 $queueCommand = new QueueCommand;
+$workerCommand = new WorkerCommand;
 
+$app->add($workerCommand);
 $app->add($queueCommand);
-$app->setDefaultCommand($queueCommand->getName(), true);
+$app->setDefaultCommand($queueCommand->getName());
 $app->run();

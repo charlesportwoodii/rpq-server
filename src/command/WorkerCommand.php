@@ -11,13 +11,8 @@ use Symfony\Component\Yaml\Exception\ParseException;
 
 use Redis;
 use RPQ\Client;
-use RPQ\Queue\Dispatcher;
 
-/**
- * Command line interface to RPQ
- * @package RPQ\Queue
- */
-final class QueueCommand extends Command
+final class WorkerCommand extends Command
 {
     /**
      * Configures a new console command
@@ -25,11 +20,12 @@ final class QueueCommand extends Command
      */
     protected function configure()
     {
-        $this->setName('queue')
-            ->setHidden(true)
-            ->setDescription('Initializes a new queue processor')
-            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file')
-            ->addOption('name', null, InputOption::VALUE_OPTIONAL, 'The queue name to work with. Defaults to `default`.');
+        $this->setName('worker')
+             ->setHidden(true)
+             ->setDescription('Runs a given worker')
+             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file')
+             ->addOption('id', null, InputOption::VALUE_REQUIRED, 'A Job UUID')
+             ->addOption('name', null, InputOption::VALUE_REQUIRED, 'The queue name to work with. Defaults to `default`.');
     }
 
     /**
@@ -58,20 +54,14 @@ final class QueueCommand extends Command
         
         $redis = new Redis;
         $redis->pconnect($config['redis']['host'], $config['redis']['port']);
-        
         $client = new Client($redis, $config['redis']['namespace']);
 
-        $queueConfig = $config['queue']['default'];
-        if (isset($config['queue'][$queue])) {
-            $queueConfig = $config['queue'][$queue];
-        }
+        $hash = explode(':', $input->getOption('id'));
+        $jobId = $hash[count($hash) - 1];
+        $jobDetails = $client->getJobById($jobId);
 
-        // Starts a new worker dispatcher
-        $dispatcher = new Dispatcher($client, $output, $queueConfig, [
-            'queueName' => $queue,
-            'configFile' => $configName,
-            'debug' => $config['debug']
-        ]);
-        $dispatcher->start();
+        // [ do work here  ... ]
+        sleep(1);
+        return 1;
     }
 }

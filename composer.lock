@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "4c24c13956df9d687e2758e753c25c3d",
+    "content-hash": "84369e03565084ed32e4bcd8ae5aa75b",
     "packages": [
         {
             "name": "amphp/amp",
@@ -83,16 +83,16 @@
         },
         {
             "name": "amphp/byte-stream",
-            "version": "v1.1.5",
+            "version": "v1.1.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/byte-stream.git",
-                "reference": "d60ba033c41d3329419575f2fbb02230855c258e"
+                "reference": "f63b98990edc8c4e401fc8ba2834197acf2df8e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/byte-stream/zipball/d60ba033c41d3329419575f2fbb02230855c258e",
-                "reference": "d60ba033c41d3329419575f2fbb02230855c258e",
+                "url": "https://api.github.com/repos/amphp/byte-stream/zipball/f63b98990edc8c4e401fc8ba2834197acf2df8e2",
+                "reference": "f63b98990edc8c4e401fc8ba2834197acf2df8e2",
                 "shasum": ""
             },
             "require": {
@@ -136,128 +136,7 @@
                 "non-blocking",
                 "stream"
             ],
-            "time": "2017-10-08T10:38:01+00:00"
-        },
-        {
-            "name": "amphp/parallel",
-            "version": "v0.1.8",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/amphp/parallel.git",
-                "reference": "25b9a2a75c4a6ba4815775267822066abab1054a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/amphp/parallel/zipball/25b9a2a75c4a6ba4815775267822066abab1054a",
-                "reference": "25b9a2a75c4a6ba4815775267822066abab1054a",
-                "shasum": ""
-            },
-            "require": {
-                "amphp/amp": "^2",
-                "amphp/byte-stream": "^1.1",
-                "amphp/parser": "^1",
-                "amphp/process": "^0.2"
-            },
-            "require-dev": {
-                "amphp/phpunit-util": "^1",
-                "friendsofphp/php-cs-fixer": "^2.3",
-                "phpunit/phpunit": "^6"
-            },
-            "suggest": {
-                "ext-pcntl": "Required for fork contexts",
-                "ext-pthreads": "Required for thread contexts",
-                "ext-sysvsem": "Required for fork synchronization",
-                "ext-sysvshm": "Required for fork contexts"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "0.1.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Amp\\Parallel\\": "lib"
-                },
-                "files": [
-                    "lib/Worker/functions.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Stephen Coakley",
-                    "email": "me@stephencoakley.com"
-                },
-                {
-                    "name": "Aaron Piotrowski",
-                    "email": "aaron@trowski.com"
-                }
-            ],
-            "description": "Parallel processing component for Amp.",
-            "homepage": "https://github.com/amphp/parallel",
-            "keywords": [
-                "async",
-                "asynchronous",
-                "concurrent",
-                "multi-processing",
-                "multi-threading"
-            ],
-            "time": "2017-07-18T03:59:56+00:00"
-        },
-        {
-            "name": "amphp/parser",
-            "version": "v1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/amphp/parser.git",
-                "reference": "f83e68f03d5b8e8e0365b8792985a7f341c57ae1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/amphp/parser/zipball/f83e68f03d5b8e8e0365b8792985a7f341c57ae1",
-                "reference": "f83e68f03d5b8e8e0365b8792985a7f341c57ae1",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^2.3",
-                "phpunit/phpunit": "^6"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Amp\\Parser\\": "lib"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Niklas Keller",
-                    "email": "me@kelunik.com"
-                },
-                {
-                    "name": "Aaron Piotrowski",
-                    "email": "aaron@trowski.com"
-                }
-            ],
-            "description": "A generator parser to make streaming parsers simple.",
-            "homepage": "https://github.com/amphp/parser",
-            "keywords": [
-                "async",
-                "non-blocking",
-                "parser",
-                "stream"
-            ],
-            "time": "2017-06-06T05:29:10+00:00"
+            "time": "2017-10-17T07:22:17+00:00"
         },
         {
             "name": "amphp/process",
@@ -490,12 +369,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/charlesportwoodii/rpq-client.git",
-                "reference": "292b6d0aa290f2de924e5fa80d7880d520b4cc50"
+                "reference": "6e529df6fc432f516d5f3a7718e0a6a80c21f86b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/charlesportwoodii/rpq-client/zipball/292b6d0aa290f2de924e5fa80d7880d520b4cc50",
-                "reference": "292b6d0aa290f2de924e5fa80d7880d520b4cc50",
+                "url": "https://api.github.com/repos/charlesportwoodii/rpq-client/zipball/6e529df6fc432f516d5f3a7718e0a6a80c21f86b",
+                "reference": "6e529df6fc432f516d5f3a7718e0a6a80c21f86b",
                 "shasum": ""
             },
             "require": {
@@ -523,7 +402,7 @@
                 }
             ],
             "description": "Redis Priority Queue Client implementation in pure PHP",
-            "time": "2017-10-16T17:02:15+00:00"
+            "time": "2017-10-31T18:40:49+00:00"
         },
         {
             "name": "symfony/console",
@@ -651,16 +530,16 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "v1.5.0",
+            "version": "v1.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "7c8fae0ac1d216eb54349e6a8baa57d515fe8803"
+                "reference": "2ec8b39c38cb16674bbf3fea2b6ce5bf117e1296"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/7c8fae0ac1d216eb54349e6a8baa57d515fe8803",
-                "reference": "7c8fae0ac1d216eb54349e6a8baa57d515fe8803",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/2ec8b39c38cb16674bbf3fea2b6ce5bf117e1296",
+                "reference": "2ec8b39c38cb16674bbf3fea2b6ce5bf117e1296",
                 "shasum": ""
             },
             "require": {
@@ -672,7 +551,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.5-dev"
+                    "dev-master": "1.6-dev"
                 }
             },
             "autoload": {
@@ -706,7 +585,7 @@
                 "portable",
                 "shim"
             ],
-            "time": "2017-06-14T15:44:48+00:00"
+            "time": "2017-10-11T12:05:26+00:00"
         },
         {
             "name": "symfony/yaml",
