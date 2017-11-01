@@ -6,8 +6,8 @@ use Amp\ByteStream\Message;
 use Amp\Loop;
 use Amp\Process\Process;
 use Exception;
+use Monolog\Logger;
 use RPQ\Client;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Dispatcher polls Redis for new jobs, and then starts the requested job
@@ -24,11 +24,6 @@ final class Dispatcher
      * @var array $config
      */
     private $config;
-    
-    /**
-     * @var OutputInterface $output
-     */
-    private $output;
 
     /**
      * @var array $args
@@ -44,17 +39,23 @@ final class Dispatcher
     private $processes = [];
 
     /**
+     * @var Logger $this->logger
+     */
+    private $logger;
+
+    /**
      * Constructor
      * @param Client $client
-     * @param OutputInterface $output
+     * @param Logger $this->logger
      * @param array $config
+     * @param array $args
      */
-    public function __construct(Client $client, OutputInterface $output, array $config = [], array $args = [])
+    public function __construct(Client $client, Logger $logger, array $config = [], array $args = [])
     {
         $this->client = $client;
         $this->config = $config;
-        $this->output = $output;
         $this->args = $args;
+        $this->logger = $logger;
     }
 
     /**
@@ -64,7 +65,10 @@ final class Dispatcher
     public function start()
     {
         Loop::run(function () {
-            $this->output->writeln(sprintf("[{$this->args['queueName']}] RPQ is now started, and is listening for new jobs every %d ms", $this->config['poll_interval']));
+            $this->logger->info(sprintf("RPQ is now started, and is listening for new jobs every %d ms", $this->config['poll_interval']), [
+                'queueName' => $this->args['queueName']
+            ]);
+
             Loop::repeat($msInterval = $this->config['poll_interval'], function ($watcherId, $callback) {
                 // Only allow `max_jobs` to run
                 if (count($this->processes) === $this->config['max_jobs']) {
@@ -82,16 +86,22 @@ final class Dispatcher
                     
                     // Grab the PID and push it onto the process stack
                     $pid = $process->getPid();
-                    if ($this->args['debug']) {
-                        $this->output->writeln("[{$this->args['queueName']}] Starting worker with PID: {$pid} | $command");    
-                    }
+                    $this->logger->info('Started worker', [
+                        'pid' => $pid,
+                        'command' => $command,
+                        'queueName' => $this->args['queueName']
+                    ]);
 
                     $this->processes[$pid] = null;
 
                     // Stream any output from the worker in realtime
                     $stream = $process->getStdout();
                     while ($chunk = yield $stream->read()) {
-                        $this->output->writeln("[{$this->args['queueName']}][{$id}] {$chunk}");
+                        $this->logger->info($chunk, [
+                            'pid' => $pid,
+                            'jobId' => $id,
+                            'queueName' => $this->args['queueName']
+                        ]);
                     }
 
                     // When the job is done, it will emit an exit status code
@@ -120,32 +130,47 @@ final class Dispatcher
         $jobId = $hash[count($hash) - 1];
         $jobDetails = $this->client->getJobById($jobId);
 
-        if ($this->args['debug']) {
-            $this->output->writeln("[{$this->args['queueName']}][{$id}] PID: {$pid} ended with exit code {$code}");
-        }
+        $this->logger->info('Job ended', [
+            'exitCode' => $code,
+            'pid' => $pid,
+            'jobId' => $id,
+            'queueName' => $this->args['queueName']
+        ]);
 
         // If the job ended successfully, remove the data from redis
         if ($code === 0) {
-            if ($this->args['debug']) {
-                $this->output->writeln("[{$this->args['queueName']}][{$id}] is now complete, and has been removed from Redis");
-            }
+            $this->logger->info('Job succeeded and is now complete', [
+                'exitCode' => $code,
+                'pid' => $pid,
+                'jobId' => $id,
+                'queueName' => $this->args['queueName']
+            ]);
+
             $this->client->getRedis()->hdel($id);
             return;
         } else {
             // If the job didn't end successfully, requeue it if necessary
             $retry = (int)$jobDetails['retry'];
             if ($retry > 0) {
-                if ($this->args['debug']) {
-                    $this->output->writeln("[{$this->args['queueName']}][{$id}] Rescheduling Job");
-                }
+                $this->logger->info('Rescheduling job due to previous failure', [
+                    'exitCode' => $code,
+                    'pid' => $pid,
+                    'jobId' => $id,
+                    'queueName' => $this->args['queueName']
+                ]);
+
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
                 $this->client->push($jobDetails['workerClass'], $jobDetails['args'], $retry - 1, (float)$jobDetails['priority'], $this->args['queueName'], $jobId);
                 
                 return;
             } else {
-                if ($this->args['debug']) {
-                    $this->output->writeln("[{$this->args['queueName']}][{$id}] is now complete, and has been removed from Redis (out of retries)");
-                }
+                $this->logger->info('Job failed', [
+                    'exitCode' => $code,
+                    'pid' => $pid,
+                    'jobId' => $id,
+                    'queueName' => $this->args['queueName']
+                ]);
+
                 $this->client->getRedis()->hdel($id);
                 return;
             }

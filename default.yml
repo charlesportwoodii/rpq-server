@@ -1,9 +1,14 @@
 ---
-debug: true
 redis:
   host: "redis"
   port: 6379
   namespace: "rpq"
+
+pid: ./rpq.pid
+
+log:
+  level: DEBUG
+  file: null
 
 queue:
   default:
