@@ -18,7 +18,7 @@ Active jobs will be pushed back onto the priority queue for re-processing.
 
 ## Graceful Shutdown `QUIT`
 
-When `QUIT` is sent to the main process, RPQ will immediately stop polling for new jobs. `TERM` will be sent to worker processes. Workers should stop whatever work they are doing and clean up if possible.
+When `QUIT` is sent to the main process, RPQ will immediately stop polling for new jobs. `TERM` will be sent to worker processes. Workers should stop whatever work they are doing and clean up if possible. Jobs that do not return a 0 exit status code will be requeued automatically. Jobs that do complete will not be requeued.
 
 Once all workers have finished their work, the main process will shut down.
 
