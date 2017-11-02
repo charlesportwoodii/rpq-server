@@ -67,8 +67,7 @@ final class JobHandler
                 'queue' => $this->queue
             ]);
 
-            $this->client->getRedis()->hdel($id);
-            return;
+            return $this->client->getRedis()->hdel($id);
         } else {
             // If the job didn't end successfully, requeue it if necessary
             $retry = (int)$jobDetails['retry'];
@@ -86,9 +85,7 @@ final class JobHandler
                 ]);
 
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
-                $this->client->push($jobDetails['workerClass'], $jobDetails['args'], $retry - 1, (float)$jobDetails['priority'], $this->queue, $jobId);
-                
-                return;
+                return $this->client->push($jobDetails['workerClass'], $jobDetails['args'], $retry - 1, (float)$jobDetails['priority'], $this->queue, $jobId);
             } else {
                 $this->logger->info('Job failed', [
                     'exitCode' => $code,
@@ -97,8 +94,7 @@ final class JobHandler
                     'queue' => $this->queue
                 ]);
 
-                $this->client->getRedis()->hdel($id);
-                return;
+                return $this->client->getRedis()->hdel($id);
             }
         }
 
