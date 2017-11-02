@@ -93,16 +93,16 @@ final class Dispatcher
 
             Loop::repeat($msInterval = $this->config['poll_interval'], function ($watcherId, $callback) {
                 Loop::onSignal(SIGINT, function() use ($watcherId) {
-                    $this->signalHandler->terminate($watcherId, $this->processes);
+                    return $this->signalHandler->terminate($watcherId, $this->processes);
                 });
                 Loop::onSignal(SIGTERM, function() use ($watcherId) {
-                    $this->signalHandler->terminate($watcherId, $this->processes);
+                    return $this->signalHandler->terminate($watcherId, $this->processes);
                 });
                 Loop::onSignal(SIGQUIT, function() use ($watcherId) {
-                    $this->signalHandler->quit($watcherId, $this->processes);
+                    return $this->signalHandler->quit($watcherId, $this->processes);
                 });
                 Loop::onSignal(SIGHUP, function() use ($watcherId) {
-                    $this->signalHandler->reload($watcherId, $this->processes);
+                    return $this->signalHandler->reload($watcherId, $this->processes);
                 });
 
                 // Only allow `max_jobs` to run
