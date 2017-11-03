@@ -26,11 +26,14 @@ abstract class AbstractJob
     {
         $this->logger = $logger;
         $this->id = $id;
+        
         if (extension_loaded('pcntl')) {
-            echo getmypid() . PHP_EOL;
             pcntl_signal(SIGTERM, function($signal) {
                 if (\method_exists(static::class, 'shutdown')) {
-                    if ($this->shutdown()) {
+                    $handled = $this->shutdown();
+                    if ($handled === true) {
+                        exit(0);
+                    } else if ($handled === false) {
                         exit(3);
                     }
                 }
@@ -48,4 +51,14 @@ abstract class AbstractJob
      * @return int
      */
     public function perform(array $args = []): int {}
+
+    /**
+     * Shutdown handler. By default this does nothing.
+     *
+     * @return void
+     */
+    protected function shutdown()
+    {
+        return;
+    }
 }
