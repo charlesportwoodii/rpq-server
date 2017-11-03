@@ -21,6 +21,11 @@ final class SignalHandler
     private $logger;
 
     /**
+     * @var array $config
+     */
+    private $config;
+
+    /**
      * @var string $queue
      */
     private $queue;
@@ -40,12 +45,14 @@ final class SignalHandler
      *
      * @param Logger $logger
      * @param Client $client
+     * @param array $config
      * @param string $queue
      */
-    public function __construct(Logger $logger, Client $client, $queue)
+    public function __construct(Logger $logger, Client $client, array $config, $queue)
     {
         $this->logger = $logger;
         $this->client = $client;
+        $this->config = $config;
         $this->queue = $queue;
         $this->jobHandler = new JobHandler(
             $this->client,
@@ -132,6 +139,24 @@ final class SignalHandler
              * Use posix_kill to actually send the signal to the process for handling
              */
             \posix_kill($pid, $signal);
+
+            // If a signal other than SIGKILL was sent to the process, create a deadline timeout and force kill the process if it's still alive after the deadline
+            if ($signal !== 9) {
+                if ($this->config['deadline_timeout'] !== null) {
+                    Loop::delay($msDelay = ((int)$this->config['deadline_timeout'] * 1000), function($watcherId, $callback) use ($process, $pid) {
+                        if ($process['process']->isRunning()) {
+                            $this->logger->info('Process has exceeded deadline timeout. Killing', [
+                                'pid' => $pid,
+                                'jobId' => $process['id'],
+                                'queue' => $this->queue
+                            ]);
+                            
+                            // Send SIGKILL to the process
+                            \posix_kill($pid, SIGKILL);
+                        }
+                    });
+                }
+            }
         }
     }
 }

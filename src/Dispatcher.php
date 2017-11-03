@@ -86,6 +86,7 @@ final class Dispatcher
         $this->signalHandler = new SignalHandler(
             $this->logger,
             $this->client,
+            $this->config,
             $this->args['queueName']
         );
         $this->jobHandler = new JobHandler(

@@ -35,7 +35,7 @@ RPQ supports the logging levels described by [RFC 5424](https://tools.ietf.org/h
 
 
 | Log Level | Code | Description |
-|:---------:|------|-------------|
+|:---------:|:---:|-------------|
 | DEBUG     | 100 | Detailed debugging information |
 | INFO      | 200 | Interesting events |
 | NOTICE    | 250 | Normal but significant events |
@@ -56,6 +56,7 @@ queue:
   default:
     max_jobs: 20
     poll_interval: 100
+    deadline_timeout: 30
 ```
 
 By default, the `default` queue will be used. Each queue may be defined by a plain text name, and supports the following options:
@@ -64,3 +65,4 @@ By default, the `default` queue will be used. Each queue may be defined by a pla
 |:------------:|-------------|
 | max_jobs | The integer maximum amount of jobs that may be run concurrently. By default, 20 jobs will be permitted to run concurrently. |
 | poll_interval | The integer interval in milliseconds at which new jobs will be pulled from Redis. By default, Redis will be polled every 100ms. |
+| deadline_timeout | The integer amount in seconds, after a worker recieves a `SIGTERM` signal, that the queue process will send a `SIGKILL` signal, if the worker is still alive. |
