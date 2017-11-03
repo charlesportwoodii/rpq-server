@@ -1,6 +1,6 @@
 #!/usr/bin/env php
-<?php
-// Hunt for an autoloader
+<?php declare(strict_types=1);
+
 $paths = [
     __DIR__ . '/autoload.php',
     __DIR__ . '/vendor/autoload.php',
@@ -21,10 +21,9 @@ use Symfony\Component\Console\Application;
 use RPQ\Queue\Command\QueueCommand;
 use RPQ\Queue\Command\WorkerCommand;
 
-// Starts a new Symfony\Console application with the queue command
 $version = 'dev';
 if (\file_exists('.git/refs/heads/master')) {
-    $version = \file_get_contents(sprintf( '.git/refs/heads/%s', 'master'));
+    $version = \file_get_contents(sprintf('.git/refs/heads/%s', 'master'));
 }
 
 $app = new Application('rpq', $version);

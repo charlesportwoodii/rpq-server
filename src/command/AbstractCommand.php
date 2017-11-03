@@ -16,12 +16,39 @@ use Symfony\Component\Yaml\Exception\ParseException;
 
 abstract class AbstractCommand extends Command
 {
+    /**
+     * @var Redis $redis
+     */
     protected $redis;
+
+    /**
+     * @var array $config
+     */
     protected $config;
+
+    /**
+     * @var Client $client
+     */
     protected $client;
+
+    /**
+     * @var MonoLog $logger
+     */
     protected $logger;
+
+    /**
+     * @var string $configName
+     */
     protected $configName;
+
+    /**
+     * @var string $queue
+     */
     protected $queue;
+
+    /**
+     * @var string $queueConfig
+     */
     protected $queueConfig;
 
     /**
@@ -36,7 +63,7 @@ abstract class AbstractCommand extends Command
         $this->configName = $input->getOption('config');
 
         // Verify the configuration file provided is valid
-        if ( $this->configName === null || !\file_exists( $this->configName)) {
+        if ($this->configName === null || !\file_exists($this->configName)) {
             $output->writeln("Please specify a valid configuration YAML file");
             return false;
         }
