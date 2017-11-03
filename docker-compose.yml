@@ -8,4 +8,6 @@ services:
     volumes:
       - ${PWD-.}:/var/www
   redis:
-    image: redis
+    image: redis:4.0-alpine
+    ports:
+      - "6379:6379"

@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-
+declare(ticks=1);
 namespace RPQ\Queue;
 
 use Monolog\Logger;
@@ -26,6 +26,17 @@ abstract class AbstractJob
     {
         $this->logger = $logger;
         $this->id = $id;
+        if (extension_loaded('pcntl')) {
+            echo getmypid() . PHP_EOL;
+            pcntl_signal(SIGTERM, function($signal) {
+                if (\method_exists(static::class, 'shutdown')) {
+                    if ($this->shutdown()) {
+                        exit(3);
+                    }
+                }
+            });
+            pcntl_async_signals(true);
+        }
     }
 
     /**

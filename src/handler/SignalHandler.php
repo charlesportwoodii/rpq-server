@@ -68,12 +68,11 @@ final class SignalHandler
      * @param array $processes
      * @return 0
      */
-    public function terminate($watcherId, array $processes)
+    public function terminate(array $processes)
     {
         $this->logger->info('Recieved SIGTERM signal. Running fast shutdown sequence');
         $this->processes = $processes;
-        $this->shutdown(9, $watcherId, true);
-        exit(0);
+        $this->shutdown(SIGKILL, true);
     }
 
     /**
@@ -90,12 +89,11 @@ final class SignalHandler
      * @param array $processes
      * @return 0
      */
-    public function quit($watcherId, array $processes)
+    public function quit(array $processes)
     {
         $this->logger->info('Recieved SIGQUIT signal. Running graceful shutdown sequence');
         $this->processes = $processes;
-        $this->shutdown(15, $watcherId);
-        exit(0);
+        $this->shutdown(SIGTERM);
     }
 
     /**
@@ -105,10 +103,9 @@ final class SignalHandler
      * @param array $processes
      * @return 0
      */
-    public function reload($watcherId, array $processes)
+    public function reload(array $processes)
     {
         $this->processes = $processes;
-        exit(0);
     }
 
     /**
@@ -118,11 +115,8 @@ final class SignalHandler
      * @param string $watcherId
      * @return void
      */
-    private function shutdown($signal = 9, $watcherId)
+    private function shutdown($signal = 9)
     {
-        // Disable RPQ polling of Redis
-        Loop::disable($watcherId);
-
         // Iterate through all the existing processes, and send the appropriate signal to the process
         foreach($this->processes as $pid => $process) {
             $this->logger->debug('Sending signal to process', [
@@ -131,14 +125,13 @@ final class SignalHandler
                 'jobId' => $process['id'],
                 'queue' => $this->queue
             ]);
-            $process['process']->signal($signal);
 
-            // Handle the job exit
-            $this->jobHandler->exit($process['id'], $pid, -1, true);
-            unset($this->processes[$pid]);
+            /**
+             * $process['process']->signal($signal)
+             * Amp\Process\Process::signal doesn't actually send signals correctly, and is not cross platform
+             * Use posix_kill to actually send the signal to the process for handling
+             */
+            \posix_kill($pid, $signal);
         }
-
-        // Cancel the main outer loop completely
-        return Loop::cancel($watcherId);
     }
 }

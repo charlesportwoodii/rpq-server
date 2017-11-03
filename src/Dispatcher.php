@@ -56,6 +56,21 @@ final class Dispatcher
     private $jobHandler;
 
     /**
+     * @var bool $isRunning;
+     */
+    private $isRunning = true;
+
+    /**
+     * @var array $signals
+     */
+    private $signals = [
+        SIGTERM => 'terminate',
+        SIGINT => 'terminate',
+        SIGQUIT => 'quit',
+        SIGHUP => 'reload'
+    ];
+
+    /**
      * Constructor
      * @param Client $client
      * @param Logger $this->logger
@@ -90,20 +105,34 @@ final class Dispatcher
             $this->logger->info(sprintf("RPQ is now started, and is listening for new jobs every %d ms", $this->config['poll_interval']), [
                 'queue' => $this->args['queueName']
             ]);
+            
+            // Register signal handling
+            foreach ($this->signals as $signal => $fn) {
+                $this->logger->debug('Registering signal', [
+                    'signal' => $signal,
+                    'fn' => $fn
+                ]);
 
+                Loop::onSignal($signal, function() use ($fn) {
+                    if (!$this->isRunning) {
+                        return;
+                    }
+                    $this->isRunning = false;
+                    return $this->signalHandler->$fn($this->processes);
+                });
+            }
+            
+            // Main polling loop
             Loop::repeat($msInterval = $this->config['poll_interval'], function ($watcherId, $callback) {
-                Loop::onSignal(SIGINT, function() use ($watcherId) {
-                    return $this->signalHandler->terminate($watcherId, $this->processes);
-                });
-                Loop::onSignal(SIGTERM, function() use ($watcherId) {
-                    return $this->signalHandler->terminate($watcherId, $this->processes);
-                });
-                Loop::onSignal(SIGQUIT, function() use ($watcherId) {
-                    return $this->signalHandler->quit($watcherId, $this->processes);
-                });
-                Loop::onSignal(SIGHUP, function() use ($watcherId) {
-                    return $this->signalHandler->reload($watcherId, $this->processes);
-                });
+                // If a signal has been recieved to stop running, allow the process pool to drain completely
+                // Before shutting down
+                if (!$this->isRunning) {
+                    if (count($this->processes) === 0) {
+                        Loop::cancel($watcherId);
+                        exit(0);
+                    }
+                    return;
+                }
 
                 // Only allow `max_jobs` to run
                 if (count($this->processes) === $this->config['max_jobs']) {
@@ -114,7 +143,7 @@ final class Dispatcher
                 $id = $this->client->pop();
                 if ($id !== null) {
                     // Spawn a new worker process to handle the job
-                    $command = "{$_SERVER["SCRIPT_FILENAME"]} worker -c {$this->args['configFile']} --id {$id} --name {$this->args['queueName']}";                    
+                    $command = "exec {$_SERVER["SCRIPT_FILENAME"]} worker -c {$this->args['configFile']} --id {$id} --name {$this->args['queueName']}";                    
 
                     $process = new Process($command);
                     $process->start();
@@ -145,7 +174,6 @@ final class Dispatcher
 
                     // When the job is done, it will emit an exit status code
                     $code = yield $process->join();
-
                     
                     $this->jobHandler->exit($id, $pid, $code, true);
                     unset($this->processes[$pid]);

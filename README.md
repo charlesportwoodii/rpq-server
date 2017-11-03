@@ -10,7 +10,9 @@ RPQ is a background processor for PHP, written in pure PHP. RPQ enables your app
 
 ## Requirements
 
-RPQ supports PHP 7.1+, and requires Redis 3.0.3+.
+RPQ supports PHP 7.1+, and requires Redis 3.0.3+, and pcntl.
+
+> Amp\Process\Process is not compatible Windows.
 
 ## Installation
 
