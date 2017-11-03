@@ -26,4 +26,4 @@ For information about how to create jobs, and schedule tasks take a look at the 
 
 ## License
 
-RPQ is licensed under the MIT license. See [LICENSE](LICENSE) for more details.
+RPQ is licensed under the BSD 3-Clause license. See [LICENSE](LICENSE) for more details.
