@@ -31,8 +31,11 @@ Once all workers have finished their work, the main process will shut down.
 When `HUP` is sent to the main process, RPQ perform the following actions:
 
 - RPQ will stop polling for new jobs.
-- RPQ will validate the existing configuration file used.
-- If the configuration is invalid, RPQ will send `TERM` to all worker processes and gracefully shut down.
-- If the configuration is valid, RPQ will spawn a new instance of itself using the provided configuration file. The old RPQ process will remain active until all worker processes have finished processing, then will shutdown. Meanwhile the new RPQ instance will take over processing new jobs.
+- RPQ will send `TERM` to all worker processes and gracefully shut down.
+- RPQ will spawn a new instance of itself with the new configuration file. The old RPQ process will remain active until all worker processes have finished processing, then will shutdown. Meanwhile the new RPQ instance will take over processing new jobs.
+
+> Note that RPQ will _pre-validate_ the configuration file on your behalf. If there is a syntax error in the YAML file, the new RPQ process will fail to start.
 
 > Note that this may result in the `max_jobs` being exceeded for both RPQ instances while the old RPQ instance is shutting down. Depending upon how many active jobs there are, and how long they execute on average, it may take some time for the configuration change to fully complete.
+
+> Note that since each new worker runs in it's own process, reloading the master process is only necessary if you wish for configuration changes to be applied to the master process.

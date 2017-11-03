@@ -125,8 +125,7 @@ final class Dispatcher
             
             // Main polling loop
             Loop::repeat($msInterval = $this->config['poll_interval'], function ($watcherId, $callback) {
-                // If a signal has been recieved to stop running, allow the process pool to drain completely
-                // Before shutting down
+                // If a signal has been recieved to stop running, allow the process pool to drain completely before shutting down
                 if (!$this->isRunning) {
                     if (count($this->processes) === 0) {
                         Loop::cancel($watcherId);
