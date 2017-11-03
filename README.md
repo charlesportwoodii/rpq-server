@@ -22,7 +22,7 @@ RPQ can be added to your project via composer.
 composer require rpq/server
 ```
 
-For information about how to create jobs, and schedule tasks take a look at the [Getting Started Guide](docs/Getting%20Started.md). The [docs](docs) directory also contains more information on specific aspects of RPQ.
+For information about how to create jobs, and schedule tasks take a look at the [Getting Started Guide](docs/Getting%20Started.md). The [docs](docs) directory also contains more information on specific aspects of RPQ. The [examples](examples/) directory also contains a few job worker examples which you can use as reference.
 
 ## License
 
