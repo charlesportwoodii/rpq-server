@@ -20,6 +20,8 @@ Active jobs will be pushed back onto the priority queue for re-processing.
 
 When `QUIT` is sent to the main process, RPQ will immediately stop polling for new jobs. `TERM` will be sent to worker processes. Workers should stop whatever work they are doing and clean up if possible. Jobs that do not return a 0 exit status code will be requeued automatically. Jobs that do complete will not be requeued.
 
+If a `deadline_timeout` is declared within the queue configuration, a `KILL` signal will be sent to the job if it is still running `deadline_timeout` seconds after `TERM` is sent to the process.
+
 Once all workers have finished their work, the main process will shut down.
 
 > Note that the main process will remain active until all workers have finished. If you wish to immediately cancel all active jobs, use `TERM` or `INT`.
