@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue;
+namespace RPQ\Queue\Process;
 
 use Amp\ByteStream\Message;
 use Amp\Loop;
@@ -8,8 +8,8 @@ use Amp\Process\Process;
 use Exception;
 use Monolog\Logger;
 use RPQ\Client;
-use RPQ\Queue\Handler\JobHandler;
-use RPQ\Queue\Handler\SignalHandler;
+use RPQ\Queue\Process\Handler\JobHandler;
+use RPQ\Queue\Process\Handler\SignalHandler;
 
 /**
  * Dispatcher polls Redis for new jobs, and then starts the requested job
@@ -143,7 +143,7 @@ final class Dispatcher
                 $id = $this->client->pop();
                 if ($id !== null) {
                     // Spawn a new worker process to handle the job
-                    $command = "exec {$_SERVER["SCRIPT_FILENAME"]} worker -c {$this->args['configFile']} --id {$id} --name {$this->args['queueName']}";                    
+                    $command = "exec {$_SERVER["SCRIPT_FILENAME"]} worker:process -c {$this->args['configFile']} --id {$id} --name {$this->args['queueName']}";                    
 
                     $process = new Process($command);
                     $process->start();

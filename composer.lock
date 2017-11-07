@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "amphp/amp",
-            "version": "v2.0.2",
+            "version": "v2.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/amphp/amp.git",
-                "reference": "8b136336a9af595d00681c1407ef598ccfa599ab"
+                "reference": "9f693b1d5394d5b35b97f83bbf3f1c94339b988a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/amphp/amp/zipball/8b136336a9af595d00681c1407ef598ccfa599ab",
-                "reference": "8b136336a9af595d00681c1407ef598ccfa599ab",
+                "url": "https://api.github.com/repos/amphp/amp/zipball/9f693b1d5394d5b35b97f83bbf3f1c94339b988a",
+                "reference": "9f693b1d5394d5b35b97f83bbf3f1c94339b988a",
                 "shasum": ""
             },
             "require": {
@@ -79,7 +79,7 @@
                 "non-blocking",
                 "promise"
             ],
-            "time": "2017-09-19T19:08:25+00:00"
+            "time": "2017-11-07T09:04:49+00:00"
         },
         {
             "name": "amphp/byte-stream",

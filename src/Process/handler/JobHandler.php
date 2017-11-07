@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Handler;
+namespace RPQ\Queue\Process\Handler;
 
 use Monolog\Logger;
 use RPQ\Client;

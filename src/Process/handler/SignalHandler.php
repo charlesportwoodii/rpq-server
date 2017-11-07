@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Handler;
+namespace RPQ\Queue\Process\Handler;
 
 use Amp\Loop;
 use Exception;
 use Monolog\Logger;
 use RPQ\Client;
-use RPQ\Queue\Handler\JobHandler;
+use RPQ\Queue\Process\Handler\JobHandler;
 
 final class SignalHandler
 {

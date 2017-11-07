@@ -8,7 +8,7 @@ use Monolog\Handler\StreamHandler;
 use Redis;
 use RPQ\Client;
 use RPQ\Queue\Command\AbstractCommand;
-use RPQ\Queue\Dispatcher;
+use RPQ\Queue\Process\Dispatcher as ProcessDispatcher;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -50,8 +50,17 @@ final class QueueCommand extends AbstractCommand
         
         \file_put_contents($this->config['pid'], getmypid());
 
-        // Starts a new worker dispatcher
-        $dispatcher = new Dispatcher(
+        $this->startProcessQueue();
+    }
+
+    /**
+     * Starts a new RPQ queue in process mode
+     * @return void
+     */
+    private function startProcessQueue()
+    {
+        $this->logger->info('Starting queue in process mode');
+        $dispatcher = new ProcessDispatcher(
             $this->client,
             $this->logger,
             $this->queueConfig,
@@ -63,4 +72,11 @@ final class QueueCommand extends AbstractCommand
 
         $dispatcher->start();
     }
+
+    /**
+     * Starts a new RPQ queue in streaming mode
+     * @todo: Document + implement
+     * @return void
+     */
+    private function startStreamQueue() {}
 }

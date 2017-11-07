@@ -13,7 +13,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
-final class WorkerCommand extends AbstractCommand
+final class ProcessWorkerCommand extends AbstractCommand
 {
     /**
      * Configures a new console command
@@ -21,7 +21,7 @@ final class WorkerCommand extends AbstractCommand
      */
     protected function configure()
     {
-        $this->setName('worker')
+        $this->setName('worker:process')
              ->setHidden(true)
              ->setDescription('Runs a given worker')
              ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file')
