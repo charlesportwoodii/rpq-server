@@ -15,10 +15,11 @@ redis:
 
 ## Process Control
 
-The PID is defined by the `pid`.
+The PID is defined by the `pid`. The mode specifies whether `process` or `stream` mode is used. For more information on these different modes, and how it affects how jobs are scheduled reference [Modes](Modes.md).
 
 ```yaml
 pid: /path/to/rpq.pid
+mode: process
 ```
 
 ## Logging
