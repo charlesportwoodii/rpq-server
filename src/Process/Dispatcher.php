@@ -143,7 +143,7 @@ final class Dispatcher
                 $id = $this->client->pop();
                 if ($id !== null) {
                     // Spawn a new worker process to handle the job
-                    $command = sprintf('exec %s %s --jobId %s --name %s',
+                    $command = sprintf('exec %s %s --jobId=%s --name=%s',
                         ($this->config['process']['script'] ?? $_SERVER["SCRIPT_FILENAME"]),
                         $this->config['process']['command'],
                         $id,
@@ -151,7 +151,7 @@ final class Dispatcher
                     );
 
                     if ($this->config['process']['config'] === true) {
-                        $command .= " --config {$this->args['configFile']}";
+                        $command .= " --config={$this->args['configFile']}";
                     }              
 
                     $process = new Process($command);
