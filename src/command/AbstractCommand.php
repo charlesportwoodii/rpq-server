@@ -80,10 +80,19 @@ abstract class AbstractCommand extends Command
         $this->client = new Client($this->redis, $this->config['redis']['namespace']);
 
         $this->logger = new Logger('rpq');
-        $this->logger->pushHandler(new StreamHandler(
-            $this->config['log']['file'] ?? 'php://stdout',
-            $this->config['log']['level']
-        ));
+        $handler = new $this->config['log']['handler']($this->config['log']['connection_string']);
+        
+        // Use a persistn connection if supported by the config and the provider
+        if ($this->config['log']['persistent'] !== null) {
+            $handler->setPersistent(true);
+        }
+        
+        if ($this->config['log']['formatter'] !== null) {
+            $formatter = new $this->config['log']['formatter']('application');
+            $handler->setFormatter($formatter);
+        }
+        
+        $this->logger->pushHandler($handler, $this->config['log']['level']);
 
         $this->queueConfig = $this->config['queue']['default'];
         if (isset($this->config['queue'][$this->queue])) {

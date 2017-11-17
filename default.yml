@@ -14,6 +14,18 @@ pid: ./rpq.pid
 mode: process
 
 log:
+  # The Monolog handler to use
+  handler: "\\Monolog\\Handler\\StreamHandler"
+  # A custom Monolog formatter to use
+  formatter: null
+  # Whether or not a persistent connection should be used
+  persistent: null
+  # The Monolog log level
+  level: "\\Monolog\\Logger::DEBUG"
+  # The connection string
+  connection_string: "php://stdout"
+
+log:
   # The MonoLog log level
   level: DEBUG
   # The filename to write out to. If set to `null`, RPQ will write to stdout
