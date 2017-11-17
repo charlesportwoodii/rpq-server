@@ -48,12 +48,6 @@ In general, as long as your perform method returns an integer status code at som
 
 The `STDOUT` and `STDERR` outputs of the worker will _automatically_ be logged by the main queue process to the main logger declared within your configuration.
 
-Each worker process also has direct access to it's own Monolog logger which it can use to write it's own messages.
-
-```php
-$this->logger->info('Logging within my worker', [ 'id' => $this->id ]);
-```
-
 ### Job Identification
 
 The current job ID assigned to your job can be queried by getting the protected `$id` property.

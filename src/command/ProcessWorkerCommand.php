@@ -21,11 +21,11 @@ final class ProcessWorkerCommand extends AbstractCommand
      */
     protected function configure()
     {
-        $this->setName('worker:process')
+        $this->setName('worker/process')
              ->setHidden(true)
              ->setDescription('Runs a given worker')
              ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file')
-             ->addOption('id', null, InputOption::VALUE_REQUIRED, 'A Job UUID')
+             ->addOption('jobId', null, InputOption::VALUE_REQUIRED, 'A Job UUID')
              ->addOption('name', null, InputOption::VALUE_REQUIRED, 'The queue name to work with. Defaults to `default`.');
     }
 
@@ -41,7 +41,7 @@ final class ProcessWorkerCommand extends AbstractCommand
             return 1;
         }
 
-        $hash = explode(':', $input->getOption('id'));
+        $hash = explode(':', $input->getOption('jobId'));
         $jobId = $hash[count($hash) - 1];
         $jobDetails = $this->client->getJobById($jobId);
 
@@ -55,12 +55,12 @@ final class ProcessWorkerCommand extends AbstractCommand
                 throw new Exception('Job does not implement RPQ\Queue\AbstractJob');
             }
 
-            $job = new $class($this->logger, $jobId);
+            $job = new $class($this->client, $jobId);
 
             return $job->perform($jobDetails['args']);
         } catch (Exception $e) {
             $this->logger->error('An error occured when executing the job', [
-                'jobId' => $input->getOption('id'),
+                'jobId' => $input->getOption('jobId'),
                 'workerClass' => $jobDetails['workerClass'],
                 'queueName' => $this->queue,
                 'message' => $e->getMessage(),

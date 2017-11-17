@@ -63,7 +63,7 @@ final class QueueCommand extends AbstractCommand
         $dispatcher = new ProcessDispatcher(
             $this->client,
             $this->logger,
-            $this->queueConfig,
+            \array_merge($this->queueConfig, ['process' => $this->config['process'] ]),
             [
                 'queueName' => $this->queue,
                 'configFile' => $this->configName

@@ -19,7 +19,38 @@ The PID is defined by the `pid`. The mode specifies whether `process` or `stream
 
 ```yaml
 pid: /path/to/rpq.pid
+```
+
+## Modes
+RPQ supports two different modes, `proces` and `stream`.
+
+### Process
+Process mode is explicitly declared by setting the `mode` to `process`.
+
+```yaml
 mode: process
+```
+
+By default, RPQ will use it's own internal worker command. When using a third-party framework, that framework may implement it's own worker command to handle the worker process.
+
+If you are using a third-party framework, you can specify the entry script for the command. By default this is `null`, which means RPQ's own internal command will be used.
+
+```yaml
+process:
+  script: /path/to/script/filename
+```
+
+If the CLI command name differs, it can be explicitly declared.
+```yaml
+process:
+  command: 'worker/process'
+```
+
+By default, `--config /path/to/rpq.yaml` will be included. This can be excluded if your framework handles loading the configuration file at runtime.
+
+```yaml
+process:
+  config: true|false
 ```
 
 ## Logging

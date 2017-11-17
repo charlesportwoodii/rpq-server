@@ -2,14 +2,14 @@
 declare(ticks=1);
 namespace RPQ\Queue;
 
-use Monolog\Logger;
+use RPQ\Client;
 
 abstract class AbstractJob
 {
     /**
-     * @var Logger $logger
+     * @var RPQ\Client $client
      */
-    protected $logger;
+    protected $client;
 
     /**
      * @var string $id
@@ -19,12 +19,12 @@ abstract class AbstractJob
     /**
      * Constructor
      *
-     * @param Logger $logger
+     * @param RPQ\Client $cient
      * @param string $id
      */
-    public function __construct(Logger $logger, $id)
+    public function __construct(Client $client, $id)
     {
-        $this->logger = $logger;
+        $this->client = $client;
         $this->id = $id;
         
         if (extension_loaded('pcntl')) {

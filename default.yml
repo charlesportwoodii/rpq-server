@@ -1,17 +1,40 @@
 ---
 redis:
+  # The Redis hostname
   host: "redis"
+  # The Redis port number
   port: 6379
+  # The RPQ Redis namespace
   namespace: "rpq"
 
+# The PID file location
 pid: ./rpq.pid
 
+# Jobs will execute in process mode
+mode: process
+
 log:
+  # The MonoLog log level
   level: DEBUG
+  # The filename to write out to. If set to `null`, RPQ will write to stdout
   file: null
 
+process:
+  # The process script name. Defaults to PHP `$_SERVER['SCRIPT_FILENAME']
+  # This option enables you to define a custom entry point for your command with integration with other frameworks
+  script: null
+  # The CLI command to call
+  command: 'worker/process'
+  # Whether or not to include the path to the RPQ configuration file.
+  # This option may be set to false for framework integratiion
+  config: true
+
 queue:
+  # `default` is the default queue all jobs are pushed in to
   default:
+    # The maximum number of jobs to spawn. In process mode, this is the maxmimum number of sub-process workers that will run
     max_jobs: 20
+    # In milliseconds, the polling interval to fetch new jobs
     poll_interval: 100
+    # When SIGQUIT is set to the process, how much time to allow a process to shutdown before forcefully killing it
     deadline_timeout: 30
