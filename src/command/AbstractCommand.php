@@ -80,7 +80,15 @@ abstract class AbstractCommand extends Command
         $this->client = new Client($this->redis, $this->config['redis']['namespace']);
 
         $this->logger = new Logger('rpq');
-        $handler = new $this->config['log']['handler']($this->config['log']['connection_string']);
+        if ($this->config['log']['handler'] === "\\Monolog\\Handler\\GelfHandler") {
+            $url = \parse_url($this->config['log']['connection_string']);
+            $transport = new \Gelf\Transport\UdpTransport($url['host'], $url['port'], \Gelf\Transport\UdpTransport::CHUNK_SIZE_LAN);
+            $publisher = new \Gelf\Publisher();
+            $publisher->addTransport($transport);
+            $handler = new $this->config['log']['handler']($publisher, $this->config['log']['level']);
+        } else {
+            $handler = new $this->config['log']['handler']($this->config['log']['connection_string'], $this->config['log']['level']);
+        }
         
         // Use a persistn connection if supported by the config and the provider
         if ($this->config['log']['persistent'] !== null) {
@@ -88,7 +96,7 @@ abstract class AbstractCommand extends Command
         }
         
         if ($this->config['log']['formatter'] !== null) {
-            $formatter = new $this->config['log']['formatter']('application');
+            $formatter = new $this->config['log']['formatter']('rpq');
             $handler->setFormatter($formatter);
         }
         
