@@ -5,6 +5,7 @@ namespace RPQ\Queue\Command;
 use Exception;
 use Redis;
 use RPQ\Client;
+use RPQ\Client\Exception\JobNotFoundException;
 use RPQ\Queue\Command\AbstractCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -43,9 +44,9 @@ final class ProcessWorkerCommand extends AbstractCommand
 
         $hash = explode(':', $input->getOption('jobId'));
         $jobId = $hash[count($hash) - 1];
-        $jobDetails = $this->client->getJobById($jobId);
 
         try {
+            $jobDetails = $this->client->getJobById($jobId);
             $class = $jobDetails['workerClass'];
             if (!\class_exists($class)) {
                 throw new Exception("Unable to find worker class {$class}");
@@ -58,6 +59,17 @@ final class ProcessWorkerCommand extends AbstractCommand
             $job = new $class($this->client, $jobId);
 
             return $job->perform($jobDetails['args']);
+        } catch (JobNotFoundException $e) {
+            $this->logger->error('Unable to fetch job from Redis.', [
+                'jobId' => $input->getOption('jobId'),
+                'queueName' => $this->queue,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
+            return -1;
         } catch (Exception $e) {
             $this->logger->error('An error occured when executing the job', [
                 'jobId' => $input->getOption('jobId'),

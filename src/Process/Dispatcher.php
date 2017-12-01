@@ -134,6 +134,9 @@ final class Dispatcher
                     return;
                 }
 
+                // Pushes scheduled jobs onto the main queue
+                $this->client->rescheduleJobs($this->args['queueName'], (string)time());
+
                 // Only allow `max_jobs` to run
                 if (count($this->processes) === $this->config['max_jobs']) {
                     return;
@@ -184,7 +187,7 @@ final class Dispatcher
                     // When the job is done, it will emit an exit status code
                     $code = yield $process->join();
                     
-                    $this->jobHandler->exit($id, $pid, $code, true);
+                    $this->jobHandler->exit($id, $pid, $code);
                     unset($this->processes[$pid]);
                 }
             });

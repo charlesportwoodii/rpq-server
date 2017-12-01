@@ -4,6 +4,7 @@ namespace RPQ\Queue\Process\Handler;
 
 use Monolog\Logger;
 use RPQ\Client;
+use RPQ\Client\Exception\JobNotFoundException;
 
 final class JobHandler
 {
@@ -47,16 +48,26 @@ final class JobHandler
      */
     public function exit($id, $pid, $code, $forceRetry = false)
     {
-        $hash = explode(':', $id);
-        $jobId = $hash[count($hash) - 1];
-        $jobDetails = $this->client->getJobById($jobId);
-
         $this->logger->info('Job ended', [
             'exitCode' => $code,
             'pid' => $pid,
             'jobId' => $id,
             'queue' => $this->queue
         ]);
+
+        $hash = explode(':', $id);
+        $jobId = $hash[count($hash) - 1];
+        try {
+            $jobDetails = $this->client->getJobById($jobId);
+        } catch (JobNotFoundException $e) {
+            $this->logger->info('Unable to process job exit code or retry status. Job data unavailable', [
+                'exitCode' => $code,
+                'pid' => $pid,
+                'jobId' => $id,
+                'queue' => $this->queue
+            ]);
+            return true;
+        }
 
         // If the job ended successfully, remove the data from redis
         if ($code === 0) {
@@ -69,14 +80,16 @@ final class JobHandler
 
             return $this->client->getRedis()->hdel($id);
         } else {
-            // If the job didn't end successfully, requeue it if necessary
-            $retry = (int)$jobDetails['retry'];
 
-            if ($forceRetry) {
-                $retry = $retry + 1;
+            $retryArgs = \explode(':', $jobDetails['retry']);
+            $retry = $retryArgs[0] === 'boolean' ? (bool)$retryArgs[1] : (int)$retryArgs[1];
+
+            // If force retry was specified, force this job to retry indefinitely
+            if ($forceRetry === true) {
+                $retry = true;
             }
 
-            if ($retry > 0) {
+            if ($retry === true || $retry > 0) {
                 $this->logger->info('Rescheduling job', [
                     'exitCode' => $code,
                     'pid' => $pid,
@@ -85,7 +98,15 @@ final class JobHandler
                 ]);
 
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
-                return $this->client->push($jobDetails['workerClass'], $jobDetails['args'], $retry - 1, (float)$jobDetails['priority'], $this->queue, $jobId);
+                return $this->client->push(
+                    $jobDetails['workerClass'],
+                    $jobDetails['args'],
+                    \gettype($retry) === 'boolean' ? (bool)$retry : (int)($retry - 1),
+                    (float)$jobDetails['priority'],
+                    $this->queue,
+                    null, 
+                    $jobId
+                );
             } else {
                 $this->logger->info('Job failed', [
                     'exitCode' => $code,
