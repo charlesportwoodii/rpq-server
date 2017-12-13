@@ -448,12 +448,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/charlesportwoodii/rpq-client.git",
-                "reference": "6ce4e976b2abf674b5824bb0356ed09c9c10d144"
+                "reference": "0cd03d61dba3d67c67e9f44b7bb8ec58b512d8d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/charlesportwoodii/rpq-client/zipball/6ce4e976b2abf674b5824bb0356ed09c9c10d144",
-                "reference": "6ce4e976b2abf674b5824bb0356ed09c9c10d144",
+                "url": "https://api.github.com/repos/charlesportwoodii/rpq-client/zipball/0cd03d61dba3d67c67e9f44b7bb8ec58b512d8d5",
+                "reference": "0cd03d61dba3d67c67e9f44b7bb8ec58b512d8d5",
                 "shasum": ""
             },
             "require": {
@@ -481,7 +481,7 @@
                 }
             ],
             "description": "Redis Priority Queue Client implementation in pure PHP",
-            "time": "2017-12-13T18:44:39+00:00"
+            "time": "2017-12-13T19:07:30+00:00"
         },
         {
             "name": "symfony/console",
