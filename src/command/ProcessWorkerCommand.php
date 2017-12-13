@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Command;
+namespace RPQ\Server\Command;
 
 use Exception;
 use Redis;
 use RPQ\Client;
 use RPQ\Client\Exception\JobNotFoundException;
-use RPQ\Queue\Command\AbstractCommand;
+use RPQ\Server\Command\AbstractCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -42,27 +42,24 @@ final class ProcessWorkerCommand extends AbstractCommand
             return 1;
         }
 
-        $hash = explode(':', $input->getOption('jobId'));
-        $jobId = $hash[count($hash) - 1];
-
         try {
-            $jobDetails = $this->client->getJobById($jobId);
-            $class = $jobDetails['workerClass'];
+            $job = $this->queue->getJob($input->getOption('jobId'));
+            $class = $job->getWorkerClass();
             if (!\class_exists($class)) {
                 throw new Exception("Unable to find worker class {$class}");
             }
 
-            if (!\is_subclass_of($class, 'RPQ\Queue\AbstractJob')) {
-                throw new Exception('Job does not implement RPQ\Queue\AbstractJob');
+            if (!\is_subclass_of($class, 'RPQ\Server\AbstractJob')) {
+                throw new Exception('Job does not implement RPQ\Server\AbstractJob');
             }
 
-            $job = new $class($this->client, $jobId);
+            $task = new $class($this->client, $job->getId());
 
-            return $job->perform($jobDetails['args']);
+            return $task->perform($job->getArgs());
         } catch (JobNotFoundException $e) {
             $this->logger->error('Unable to fetch job from Redis.', [
-                'jobId' => $input->getOption('jobId'),
-                'queueName' => $this->queue,
+                'jobId' => $job->getId(),
+                'queueName' => $this->queue->getName(),
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
@@ -72,9 +69,9 @@ final class ProcessWorkerCommand extends AbstractCommand
             return -1;
         } catch (Exception $e) {
             $this->logger->error('An error occured when executing the job', [
-                'jobId' => $input->getOption('jobId'),
-                'workerClass' => $jobDetails['workerClass'],
-                'queueName' => $this->queue,
+                'jobId' => $job->getId(),
+                'workerClass' => $job->getWorkerClass(),
+                'queueName' => $this->queue->getName(),
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),

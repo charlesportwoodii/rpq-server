@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 declare(ticks=1);
-namespace RPQ\Queue;
+
+namespace RPQ\Server;
 
 use RPQ\Client;
 

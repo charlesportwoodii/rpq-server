@@ -1,12 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Process\Handler;
+namespace RPQ\Server\Process\Handler;
 
 use Amp\Loop;
 use Exception;
 use Monolog\Logger;
 use RPQ\Client;
-use RPQ\Queue\Process\Handler\JobHandler;
+use RPQ\Queue;
+use RPQ\Server\Process\Handler\JobHandler;
 
 final class SignalHandler
 {
@@ -48,7 +49,7 @@ final class SignalHandler
      * @param array $config
      * @param string $queue
      */
-    public function __construct(Logger $logger, Client $client, array $config, $queue)
+    public function __construct(Logger $logger, Client $client, array $config, Queue $queue)
     {
         $this->logger = $logger;
         $this->client = $client;
@@ -148,7 +149,7 @@ final class SignalHandler
                             $this->logger->info('Process has exceeded deadline timeout. Killing', [
                                 'pid' => $pid,
                                 'jobId' => $process['id'],
-                                'queue' => $this->queue
+                                'queue' => $this->queue->getName()
                             ]);
                             
                             // Send SIGKILL to the process

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Command;
+namespace RPQ\Server\Command;
 
 use Exception;
 use Redis;
@@ -42,7 +42,7 @@ abstract class AbstractCommand extends Command
     protected $configName;
 
     /**
-     * @var string $queue
+     * @var Queue $queue
      */
     protected $queue;
 
@@ -59,7 +59,6 @@ abstract class AbstractCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->queue = $input->getOption('name') ?? 'default';
         $this->configName = $input->getOption('config');
 
         // Verify the configuration file provided is valid
@@ -78,6 +77,7 @@ abstract class AbstractCommand extends Command
         $this->redis = new Redis;
         $this->redis->pconnect($this->config['redis']['host'], $this->config['redis']['port']);
         $this->client = new Client($this->redis, $this->config['redis']['namespace']);
+        $this->queue = $this->client->getQueue($input->getOption('name') ?? 'default');
 
         $this->logger = new Logger('rpq');
         if ($this->config['log']['handler'] === "\\Monolog\\Handler\\GelfHandler") {
@@ -103,8 +103,8 @@ abstract class AbstractCommand extends Command
         $this->logger->pushHandler($handler, $this->config['log']['level']);
 
         $this->queueConfig = $this->config['queue']['default'];
-        if (isset($this->config['queue'][$this->queue])) {
-            $this->queueConfig = $this->config['queue'][$this->queue];
+        if (isset($this->config['queue'][$this->queue->getName()])) {
+            $this->queueConfig = $this->config['queue'][$this->queue->getName()];
         }
 
         return true;

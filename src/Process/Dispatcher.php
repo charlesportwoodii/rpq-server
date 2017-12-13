@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Process;
+namespace RPQ\Server\Process;
 
 use Amp\ByteStream\Message;
 use Amp\Loop;
@@ -8,8 +8,9 @@ use Amp\Process\Process;
 use Exception;
 use Monolog\Logger;
 use RPQ\Client;
-use RPQ\Queue\Process\Handler\JobHandler;
-use RPQ\Queue\Process\Handler\SignalHandler;
+use RPQ\Queue;
+use RPQ\Server\Process\Handler\JobHandler;
+use RPQ\Server\Process\Handler\SignalHandler;
 
 /**
  * Dispatcher polls Redis for new jobs, and then starts the requested job
@@ -31,7 +32,6 @@ final class Dispatcher
      * @var array $args
      */
     private $args = [
-        'queue' => 'default',
         'configFile' => ''
     ];
 
@@ -41,9 +41,14 @@ final class Dispatcher
     private $processes = [];
 
     /**
-     * @var Logger $this->logger
+     * @var Logger $logger
      */
     private $logger;
+
+    /**
+     * @var Queue $queue
+     */
+    private $queue;
 
     /**
      * @var SignalHandler $signalHandler
@@ -77,22 +82,23 @@ final class Dispatcher
      * @param array $config
      * @param array $args
      */
-    public function __construct(Client $client, Logger $logger, array $config = [], array $args = [])
+    public function __construct(Client $client, Logger $logger, Queue $queue, array $config = [], array $args = [])
     {
         $this->client = $client;
         $this->config = $config;
         $this->args = $args;
         $this->logger = $logger;
+        $this->queue = $queue;
         $this->signalHandler = new SignalHandler(
             $this->logger,
             $this->client,
             $this->config,
-            $this->args['queueName']
+            $this->queue
         );
         $this->jobHandler = new JobHandler(
             $this->client, 
             $this->logger,
-            $this->args['queueName']
+            $this->queue
         );
     }
 
@@ -104,7 +110,7 @@ final class Dispatcher
     {
         Loop::run(function () {
             $this->logger->info(sprintf("RPQ is now started, and is listening for new jobs every %d ms", $this->config['poll_interval']), [
-                'queue' => $this->args['queueName']
+                'queue' => $this->queue->getName()
             ]);
             
             // Register signal handling
@@ -135,7 +141,7 @@ final class Dispatcher
                 }
 
                 // Pushes scheduled jobs onto the main queue
-                $this->client->rescheduleJobs($this->args['queueName'], (string)time());
+                $this->queue->rescheduleJobs($this->queue->getName(), (string)time());
 
                 // Only allow `max_jobs` to run
                 if (count($this->processes) === $this->config['max_jobs']) {
@@ -143,14 +149,15 @@ final class Dispatcher
                 }
 
                 // ZPOP a job from the priority queue
-                $id = $this->client->pop();
-                if ($id !== null) {
+                $job = $this->queue->pop();
+
+                if ($job !== null) {
                     // Spawn a new worker process to handle the job
                     $command = sprintf('exec %s %s --jobId=%s --name=%s',
                         ($this->config['process']['script'] ?? $_SERVER["SCRIPT_FILENAME"]),
                         $this->config['process']['command'],
-                        $id,
-                        $this->args['queueName']
+                        $job->getId(),
+                        $this->queue->getName()
                     );
 
                     if ($this->config['process']['config'] === true) {
@@ -165,13 +172,13 @@ final class Dispatcher
                     $this->logger->info('Started worker', [
                         'pid' => $pid,
                         'command' => $command,
-                        'id' => $id,
-                        'queue' => $this->args['queueName']
+                        'id' => $job->getId(),
+                        'queue' => $this->queue->getName()
                     ]);
 
                     $this->processes[$pid] = [
                         'process' => $process,
-                        'id' => $id
+                        'id' => $job->getId()
                     ];
 
                     // Stream any output from the worker in realtime
@@ -179,15 +186,15 @@ final class Dispatcher
                     while ($chunk = yield $stream->read()) {
                         $this->logger->info($chunk, [
                             'pid' => $pid,
-                            'jobId' => $id,
-                            'queue' => $this->args['queueName']
+                            'jobId' => $job->getId(),
+                            'queue' => $this->queue->getName()
                         ]);
                     }
 
                     // When the job is done, it will emit an exit status code
                     $code = yield $process->join();
                     
-                    $this->jobHandler->exit($id, $pid, $code);
+                    $this->jobHandler->exit($job->getId(), $pid, $code);
                     unset($this->processes[$pid]);
                 }
             });

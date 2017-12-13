@@ -18,8 +18,8 @@ foreach ($paths as $path) {
 }
 
 use Symfony\Component\Console\Application;
-use RPQ\Queue\Command\QueueCommand;
-use RPQ\Queue\Command\ProcessWorkerCommand;
+use RPQ\Server\Command\QueueCommand;
+use RPQ\Server\Command\ProcessWorkerCommand;
 
 $version = 'dev';
 if (\file_exists('.git/refs/heads/master')) {

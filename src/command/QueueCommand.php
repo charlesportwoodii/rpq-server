@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Command;
+namespace RPQ\Server\Command;
 
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
 use Redis;
 use RPQ\Client;
-use RPQ\Queue\Command\AbstractCommand;
-use RPQ\Queue\Process\Dispatcher as ProcessDispatcher;
+use RPQ\Server\Command\AbstractCommand;
+use RPQ\Server\Process\Dispatcher as ProcessDispatcher;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -63,9 +63,9 @@ final class QueueCommand extends AbstractCommand
         $dispatcher = new ProcessDispatcher(
             $this->client,
             $this->logger,
-            \array_merge($this->queueConfig, ['process' => $this->config['process'] ]),
+            $this->queue,
+            \array_merge($this->queueConfig, ['process' => $this->config['process']]),
             [
-                'queueName' => $this->queue,
                 'configFile' => $this->configName
             ]
         );

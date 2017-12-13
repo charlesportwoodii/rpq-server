@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace RPQ\Queue\Process\Handler;
+namespace RPQ\Server\Process\Handler;
 
 use Monolog\Logger;
 use RPQ\Client;
-use RPQ\Client\Exception\JobNotFoundException;
+use RPQ\Exception\JobNotFoundException;
+use RPQ\Queue;
 
 final class JobHandler
 {
@@ -19,7 +20,7 @@ final class JobHandler
     private $logger;
 
     /**
-     * @var string $queue
+     * @var Queue $queue
      */
     private $queue;
 
@@ -28,9 +29,9 @@ final class JobHandler
      *
      * @param Client $client
      * @param Logger $logger
-     * @param string $queue
+     * @param string $this->queue
      */
-    public function __construct(Client $client, Logger $logger, $queue)
+    public function __construct(Client $client, Logger $logger, Queue $queue)
     {
         $this->client = $client;
         $this->logger = $logger;
@@ -58,12 +59,12 @@ final class JobHandler
         $hash = explode(':', $id);
         $jobId = $hash[count($hash) - 1];
         try {
-            $jobDetails = $this->client->getJobById($jobId);
+            $job = $this->queue->getJob($jobId);
         } catch (JobNotFoundException $e) {
             $this->logger->info('Unable to process job exit code or retry status. Job data unavailable', [
                 'exitCode' => $code,
                 'pid' => $pid,
-                'jobId' => $id,
+                'jobId' => $job->getId(),
                 'queue' => $this->queue
             ]);
             return true;
@@ -74,15 +75,14 @@ final class JobHandler
             $this->logger->info('Job succeeded and is now complete', [
                 'exitCode' => $code,
                 'pid' => $pid,
-                'jobId' => $id,
+                'jobId' => $job->getId(),
                 'queue' => $this->queue
             ]);
 
             return $this->client->getRedis()->hdel($id);
         } else {
 
-            $retryArgs = \explode(':', $jobDetails['retry']);
-            $retry = $retryArgs[0] === 'boolean' ? (bool)$retryArgs[1] : (int)$retryArgs[1];
+            $retry = $job->getRetry();
 
             // If force retry was specified, force this job to retry indefinitely
             if ($forceRetry === true) {
@@ -93,29 +93,28 @@ final class JobHandler
                 $this->logger->info('Rescheduling job', [
                     'exitCode' => $code,
                     'pid' => $pid,
-                    'jobId' => $id,
+                    'jobId' => $job->getId(),
                     'queue' => $this->queue
                 ]);
 
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
-                return $this->client->push(
-                    $jobDetails['workerClass'],
-                    $jobDetails['args'],
+                return $this->queue->push(
+                    $job->getWorkerClass(),
+                    $job->getArgs(),
                     \gettype($retry) === 'boolean' ? (bool)$retry : (int)($retry - 1),
-                    (float)$jobDetails['priority'],
-                    $this->queue,
+                    (float)$job->getPriority(),
                     null, 
-                    $jobId
+                    $job->getId()
                 );
             } else {
                 $this->logger->info('Job failed', [
                     'exitCode' => $code,
                     'pid' => $pid,
-                    'jobId' => $id,
+                    'jobId' => $job->getId(),
                     'queue' => $this->queue
                 ]);
 
-                return $this->client->getRedis()->hdel($id);
+                return $this->client->getRedis()->del($job->getId());
             }
         }
 
