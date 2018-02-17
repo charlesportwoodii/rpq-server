@@ -28,6 +28,7 @@ Once all workers have finished their work, the main process will shut down.
 
 ## Reload `HUP`
 
+> NOTE: This signal is not yet fully implemented. 
 When `HUP` is sent to the main process, RPQ perform the following actions:
 
 - RPQ will stop polling for new jobs.

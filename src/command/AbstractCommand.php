@@ -79,28 +79,20 @@ abstract class AbstractCommand extends Command
         $this->client = new Client($this->redis, $this->config['redis']['namespace']);
         $this->queue = $this->client->getQueue($input->getOption('name') ?? 'default');
 
-        $this->logger = new Logger('rpq');
-        if ($this->config['log']['handler'] === "\\Monolog\\Handler\\GelfHandler") {
-            $url = \parse_url($this->config['log']['connection_string']);
-            $transport = new \Gelf\Transport\UdpTransport($url['host'], $url['port'], \Gelf\Transport\UdpTransport::CHUNK_SIZE_LAN);
-            $publisher = new \Gelf\Publisher();
-            $publisher->addTransport($transport);
-            $handler = new $this->config['log']['handler']($publisher, $this->config['log']['level']);
+        defined('LOGGER_APP_NAME') or define('LOGGER_APP_NAME', 'rpq');
+        
+        // If a default logger configuration isn't set, pipe data to stdout
+        if (
+            !isset($this->config['log']['logger']) || 
+            !\file_exists($this->config['log']['logger'])
+        ) {
+            $this->logger = new Logger(LOGGER_APP_NAME);
+            $handler = new StreamHandler('php://stdout', Logger::DEBUG);
+            $this->logger->pushHandler($handler, Logger::DEBUG);
         } else {
-            $handler = new $this->config['log']['handler']($this->config['log']['connection_string'], $this->config['log']['level']);
+            // Otherwise use the preconfigured logger
+            $this->logger = require $this->config['log']['logger'];
         }
-        
-        // Use a persistn connection if supported by the config and the provider
-        if ($this->config['log']['persistent'] !== null) {
-            $handler->setPersistent(true);
-        }
-        
-        if ($this->config['log']['formatter'] !== null) {
-            $formatter = new $this->config['log']['formatter']('rpq');
-            $handler->setFormatter($formatter);
-        }
-        
-        $this->logger->pushHandler($handler, $this->config['log']['level']);
 
         $this->queueConfig = $this->config['queue']['default'];
         if (isset($this->config['queue'][$this->queue->getName()])) {

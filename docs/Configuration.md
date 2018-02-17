@@ -55,27 +55,22 @@ process:
 
 ## Logging
 
-RPQ uses [Monolog](https://github.com/Seldaek/monolog) to log mesages, which provides great flexability when routing messages. The default configuration listed below streams logs to STDOUT.
+RPQ uses [Monolog](https://github.com/Seldaek/monolog) to log mesages, which provides great flexability when routing messages.
 
 ```yaml
 log:
-  handler: "\\Monolog\\Handler\\StreamHandler"
-  formatter: null
-  persistent: null
+  logger: "/var/www/logs/application.log"
   level: "\\Monolog\\Logger::DEBUG"
-  connection_string: "php://stdout"
 ```
 
 | Option | Default Value | Description |
 |:------:|---------------|-------------|
-| handler | `"\\Monolog\\Handler\\StreamHandler"` | The fully qualified class name, as a string of the Monolog handler to user|
-| formatter  | `null`| The fully qualified class name, as a string of the Monolog formatter to use. |
-| persistent | `null` | Whether or not a persistent connection should be used. This option is only relavant for certain Monolog formatters. |
+| logger | `null` | The full path name to your logger configuration file. This should be a PHP file that returns an instance of `\Monolog\Logger`. |
 | level | `"\\Monolog\\Logger::DEBUG"` | The Monolog log level. |
-| connection_string | `"php://stdout"` | The connection string defines where logs are written to. This may be a file handler, unix socket, or TCP stream. |
+
+> If `log:logger` is not defined, or the file does not exists or cannot be found, RPQ will stream data to STDOUT.
 
 RPQ supports the logging levels described by [RFC 5424](https://tools.ietf.org/html/rfc5424). These log levels are:
-
 
 | Log Level | Code | Description |
 |:---------:|:---:|-------------|

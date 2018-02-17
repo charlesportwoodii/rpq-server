@@ -20,6 +20,7 @@ Process mode is recommended for light to medium job queues, where you do not ant
 
 ## Stream
 
+> This mode is not yet implemented
 In streaming mode, RPQ will spawn a single queue process which listens for incoming jobs, and will spawn `queue:<name>:max_jobs` worker processes. Worker processes will listen for stream requests from the main RPQ queue process to process a job, and will with locks to ensure that each worker is performing only a single job.
 
 Stream mode is recommended for heavy job queues where new jobs are constantly being added and processed around the clock.
