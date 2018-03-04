@@ -9,8 +9,9 @@ use RPQ\Client\Exception\JobNotFoundException;
 use RPQ\Server\Command\AbstractCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -25,9 +26,11 @@ final class ProcessWorkerCommand extends AbstractCommand
         $this->setName('worker/process')
              ->setHidden(true)
              ->setDescription('Runs a given worker')
-             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file')
-             ->addOption('jobId', null, InputOption::VALUE_REQUIRED, 'A Job UUID')
-             ->addOption('name', null, InputOption::VALUE_REQUIRED, 'The queue name to work with. Defaults to `default`.');
+             ->setDefinition(new InputDefinition([
+                new InputOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file'),
+                new InputOption('jobId', null, InputOption::VALUE_REQUIRED, 'A Job UUID'),
+                new InputOption('name', null, InputOption::VALUE_REQUIRED, 'The queue name to work with. Defaults to `default`.'),
+            ]));
     }
 
     /**

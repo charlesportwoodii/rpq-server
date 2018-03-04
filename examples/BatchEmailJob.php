@@ -102,7 +102,7 @@ final class BatchEmailJob extends AbstractJob
      * Register a shutdown handler
      * @return bool
      */
-    private function shutdown()
+    protected function shutdown()
     {
         // Indicate to our main loop that we should stop processing additonal messages
         $this->shutdown = true;

@@ -5,6 +5,7 @@ namespace RPQ\Server\Process;
 use Amp\ByteStream\Message;
 use Amp\Loop;
 use Amp\Process\Process;
+use Amp\Promise\wait;
 use Exception;
 use Monolog\Logger;
 use RPQ\Client;
@@ -66,14 +67,9 @@ final class Dispatcher
     private $isRunning = true;
 
     /**
-     * @var array $signals
+     * @var bool $isWaiting;
      */
-    private $signals = [
-        SIGTERM => 'terminate',
-        SIGINT => 'terminate',
-        SIGQUIT => 'quit',
-        SIGHUP => 'reload'
-    ];
+    private $isWaiting = false;
 
     /**
      * Constructor
@@ -93,13 +89,19 @@ final class Dispatcher
             $this->logger,
             $this->client,
             $this->config,
-            $this->queue
+            $this->queue,
+            $this->args
         );
         $this->jobHandler = new JobHandler(
             $this->client, 
             $this->logger,
             $this->queue
         );
+    }
+
+    public function getProcesses()
+    {
+        return $this->processes;
     }
 
     /**
@@ -114,18 +116,26 @@ final class Dispatcher
             ]);
             
             // Register signal handling
-            foreach ($this->signals as $signal => $fn) {
+            foreach ($this->signalHandler->getSignals() as $signal) {
                 $this->logger->debug('Registering signal', [
-                    'signal' => $signal,
-                    'fn' => $fn
+                    'signal' => $signal
                 ]);
 
-                Loop::onSignal($signal, function() use ($fn) {
-                    if (!$this->isRunning) {
-                        return;
-                    }
+                Loop::onSignal($signal, function($signalId) use ($signal) {
+                    Loop::disable($signalId);
                     $this->isRunning = false;
-                    return $this->signalHandler->$fn($this->processes);
+                    $this->isWaiting = true;
+
+                    $promise = $this->signalHandler->handle($this, $signal);
+                    $result = \Amp\Promise\wait($promise);
+
+                    if ($result === null || $result === 0) {
+                        $this->isWaiting = false;
+                    } else {
+                        $this->isRunning = true;
+                        $this->isWaiting = false;
+                    }
+                    Loop::enable($signalId);
                 });
             }
             
@@ -133,10 +143,15 @@ final class Dispatcher
             Loop::repeat($msInterval = $this->config['poll_interval'], function ($watcherId, $callback) {
                 // If a signal has been recieved to stop running, allow the process pool to drain completely before shutting down
                 if (!$this->isRunning) {
-                    if (count($this->processes) === 0) {
-                        Loop::cancel($watcherId);
-                        exit(0);
-                    }
+                    Loop::disable($watcherId);
+                    Loop::delay($msDelay = 1000, function() use ($watcherId) {
+                        if (count($this->processes) === 0 && $this->isWaiting === false) {
+                            Loop::cancel($watcherId);
+                            exit(0);
+                        }
+                        
+                        Loop::enable($watcherId);
+                    });
                     return;
                 }
 
@@ -168,7 +183,7 @@ final class Dispatcher
                     $process->start();
                     
                     // Grab the PID and push it onto the process stack
-                    $pid = $process->getPid();
+                    $pid = yield $process->getPid();
                     $this->logger->info('Started worker', [
                         'pid' => $pid,
                         'command' => $command,

@@ -53,7 +53,7 @@ final class JobHandler
             'exitCode' => $code,
             'pid' => $pid,
             'jobId' => $id,
-            'queue' => $this->queue
+            'queue' => $this->queue->getName()
         ]);
 
         $hash = explode(':', $id);
@@ -65,7 +65,7 @@ final class JobHandler
                 'exitCode' => $code,
                 'pid' => $pid,
                 'jobId' => $job->getId(),
-                'queue' => $this->queue
+                'queue' => $this->queue->getName()
             ]);
             return true;
         }
@@ -76,7 +76,7 @@ final class JobHandler
                 'exitCode' => $code,
                 'pid' => $pid,
                 'jobId' => $job->getId(),
-                'queue' => $this->queue
+                'queue' => $this->queue->getName()
             ]);
 
             return $this->client->getRedis()->hdel($id);
@@ -94,7 +94,7 @@ final class JobHandler
                     'exitCode' => $code,
                     'pid' => $pid,
                     'jobId' => $job->getId(),
-                    'queue' => $this->queue
+                    'queue' => $this->queue->getName()
                 ]);
 
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
@@ -111,7 +111,7 @@ final class JobHandler
                     'exitCode' => $code,
                     'pid' => $pid,
                     'jobId' => $job->getId(),
-                    'queue' => $this->queue
+                    'queue' => $this->queue->getName()
                 ]);
 
                 return $this->client->getRedis()->del($job->getId());

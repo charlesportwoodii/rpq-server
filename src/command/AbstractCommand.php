@@ -75,7 +75,8 @@ abstract class AbstractCommand extends Command
         }
         
         $this->redis = new Redis;
-        $this->redis->pconnect($this->config['redis']['host'], $this->config['redis']['port']);
+        $this->redis->connect($this->config['redis']['host'], $this->config['redis']['port']);
+        $this->redis->echo('Hello RPQ');
         $this->client = new Client($this->redis, $this->config['redis']['namespace']);
         $this->queue = $this->client->getQueue($input->getOption('name') ?? 'default');
 
