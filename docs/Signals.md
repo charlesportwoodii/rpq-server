@@ -32,9 +32,10 @@ When `HUP` is sent to the main process, RPQ perform the following actions:
 
 - RPQ will run a self-test to verify that the configuration file syntax and attributes are correct.
 - RPQ will stop polling for new jobs.
-- RPQ will send `TERM` to all worker processes and gracefully shut down.
-- RPQ will spawn a new instance of itself with the new configuration file. The old RPQ process will remain active until all worker processes have finished processing, then will shutdown. A new RPQ instance will be started once the old RPQ instance has terminated.
+- If the self-test reports that the configuration file is _invalid_, RPQ will report an error, and will re-enabling job processing.
+- If the self-test reports that the configuration file is _valid, RPQ
+- RPQ will spawn a new instance of itself with the new configuration file. The old RPQ process will remain active until all worker processes have finished processing, then will shutdown.
 
-> Note that RPQ will _pre-validate_ the configuration file on your behalf. If there is a syntax error in the YAML file, the new RPQ process will fail to start.
+> Note that the new master process cannot re-attach to `stdout`. If you are using the default logger configuration, or `php://stdout`, you will lose access to log data. It is recommended to use file based logging to prevent loss of log data.
 
-> Note that since each new worker runs in it's own process, reloading the master process is only necessary if you wish for configuration changes to be applied to the master process.
+> Note that since each new worker runs in it's own process, reloading the master process is only necessary if you wish for configuration changes to be applied to the master process without downtime.

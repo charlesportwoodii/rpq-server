@@ -37,4 +37,4 @@ queue:
     # In milliseconds, the polling interval to fetch new jobs
     poll_interval: 100
     # When SIGQUIT is set to the process, how much time to allow a process to shutdown before forcefully killing it
-    deadline_timeout: 5
+    deadline_timeout: 10

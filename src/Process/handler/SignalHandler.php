@@ -2,8 +2,10 @@
 
 namespace RPQ\Server\Process\Handler;
 
-use Amp\Loop;
 use Amp\Deferred;
+use Amp\Failure;
+use Amp\Loop;
+use Amp\Success;
 use Exception;
 use Monolog\Logger;
 use Symfony\Component\Process\Process;
@@ -59,24 +61,26 @@ final class SignalHandler
         SIGTERM => 'terminate',
         SIGINT => 'terminate',
         SIGQUIT => 'quit',
-        SIGHUP => 'reload'
+        SIGHUP => 'reload',
+        SIGUSR1 => 'reserved',
+        SIGUSR2 => 'reserved'
     ];
+
+    private $handlers = [];
 
     /**
      * Constructor
-     *
-     * @param Logger $logger
-     * @param Client $client
-     * @param array $config
-     * @param string $queue
+     * @param Dispatcher $dispatcher
      */
-    public function __construct(Logger $logger, Client $client, array $config, Queue $queue, array $args = [])
+    public function __construct(Dispatcher &$dispatcher)
     {
-        $this->logger = $logger;
-        $this->client = $client;
-        $this->config = $config;
-        $this->queue = $queue;
-        $this->args = $args;
+        $this->dispatcher = $dispatcher;
+        $this->logger = $this->dispatcher->getLogger();
+        $this->client = $this->dispatcher->getClient();
+        $this->config = $this->dispatcher->getConfig();
+        $this->queue = $this->dispatcher->getQueue();
+        $this->args = $this->dispatcher->getArgs();
+
         $this->jobHandler = new JobHandler(
             $this->client,
             $this->logger,
@@ -94,56 +98,58 @@ final class SignalHandler
     }
 
     /**
-     * 
+     * Handles incoming signals
      * @param Dispatcher $processes
      * @param int $signal
      * @return Promise
      */
-    public function handle(Dispatcher &$dispatcher, int $signal)
+    public function handle(int $signal)
     {
-        $deferred = new Deferred;
-
-        // Only call a signal handler if it is registered with this class
-        if (isset($this->signals[$signal])) {
-            // Bind the processes that were passed to a local object
-            $this->dispatcher = $dispatcher;
-
-            // Grab the method name to call
-            $fn = $this->signals[$signal];
-
-            // Call the method
-            $result = $this->$fn();
-
-            // Need to set a watcher for PID's on non-shutdown tasks
-            // @todo
-
-            // Set a 1s loop timer to check that all processes are dead before we exit from this method
-            // We do this to avoid starting RPQ before jobs the job state is reset to avoid running the same job
-            // within this RPQ server instance and the new one that will be spanwed, as we do not want the same job running 
-            // multiple times
-            Loop::repeat($msDelay = 1000, function ($watcherId, $callback) use ($deferred, $signal, $result) {
-                if (count($this->dispatcher->getProcesses()) === 0) {
-                    Loop::cancel($watcherId);  
-                    // If the signal we're handling is a RELOAD signal, and it returned successfully
-                    if ($signal === SIGHUP && $result === 0) {
-                        // Spawn a detached RPQ instance
-                        $pid = $this->spawnRpqInstance(false);
-                        $this->logger->debug('New RPQ process has been started.', [
-                            'pid' => $pid
-                        ]);
-                    }
-                    return $deferred->resolve($result);
-                }
-            });
-        } else {
-            // By default resolve our promise to null immediately
-            $deferred->resolve(null);
+        // If this signal is already being handled, return a Failure Promise and don't do anything
+        if (isset($this->handlers[$signal]) && $this->handlers[$signal] === true) {
+            return new Failure(new Exception('Signal is already being processed.'));
         }
 
-        // Return a promise to be handled in the dispatcher
+        // Indicate that we're handling this signal to block repeat signals
+        $this->handlers[$signal] = true;
+
+        // Disable processing of new jobs while we handle the signal
+        $this->dispatcher->setIsRunning(false);
+
+        // Call the signal handler from the signal mapping
+        $fn = $this->signals[$signal];
+        $result = $this->$fn();
+
+        // $result is either going to be `null` or a boolean value
+        // If it's `true`, then skip the shutdown sequence
+        if ($result === true) {
+            unset($this->handlers[$signal]);
+            return new Success($result);
+        }
+
+        // Wait until all processes have ended before resolving the promise
+        $deferred = new Deferred;
+        Loop::repeat(1000, function ($watcherId, $callback) use ($deferred, $signal, $result) {
+            if (count($this->dispatcher->getProcesses()) === 0) {
+                Loop::cancel($watcherId);
+                unset($this->handlers[$signal]);
+                return $deferred->resolve($result);
+            }
+        });
+
         return $deferred->promise();
     }
 
+    /**
+     * Placeholder for future signals that we may want to use
+     * @return true
+     */
+    private function reserved()
+    {
+        $this->logger->info('This signal is reserved for future use.');
+        return true;
+    }
+    
     /**
      * Fast Shutdown
      * 
@@ -156,7 +162,7 @@ final class SignalHandler
      * 
      * @return null
      */
-    public function terminate()
+    private function terminate()
     {
         $this->logger->info('Recieved SIGTERM signal. Running fast shutdown sequence.');
         $this->shutdown(SIGKILL);
@@ -175,7 +181,7 @@ final class SignalHandler
      * 
      * @return null
      */
-    public function quit()
+    private function quit()
     {
         $this->logger->info('Recieved SIGQUIT signal. Running graceful shutdown sequence.');
         $this->shutdown(SIGTERM);
@@ -183,28 +189,37 @@ final class SignalHandler
     }
 
     /**
-     * Reload
+     * Graceful reload
+     * 
+     * Runs a self test to verify that the new RPQ configuration is valid.
+     * If the configuration is valid, RPQ will spawn a new RPQ instance to begin job processing
+     * If the configuration is not valid, RPQ will report the error and will continue processing jobs
      * 
      * @return integer
      */
-    public function reload()
+    private function reload()
     {
         $this->logger->info('Recieved SIGHUP signal.');
         $test = $this->spawnRpqInstance(true);
 
         if ($test === true) {
             $this->logger->debug('Self test passes. Running graceful shutdown sequence.');
-            return 0;
+            $pid = $this->spawnRpqInstance(false);
+            $this->logger->info('New RPQ process has been started.', [
+                'pid' => $pid
+            ]);
         } else {
-            $this->logger->debug('Self test failed. Aborting reload');
-            return 1;
+            $this->logger->debug('Self test failed. Aborting reload.');
+            $this->dispatcher->setIsRunning(true);
         }
+
+        return null;
     }
 
     /**
      * Executes a self test by running `./rpq queue -t -c <config_file>.
-     *   This method is blocking until the self test finishes, and the 
-     *   self test will be run within a separate process space.
+     * This method is blocking until the self test finishes, and the 
+     * self test will be run within a separate process space.
      * 
      * @return mixed
      */
@@ -263,7 +278,7 @@ final class SignalHandler
             // If a signal other than SIGKILL was sent to the process, create a deadline timeout and force kill the process if it's still alive after the deadline
             if ($signal !== 9) {
                 if ($this->config['deadline_timeout'] !== null) {
-                    Loop::delay($msDelay = ((int)$this->config['deadline_timeout'] * 1000), function($watcherId, $callback) use ($process, $pid) {
+                    Loop::delay(((int)$this->config['deadline_timeout'] * 1000), function($watcherId, $callback) use ($process, $pid) {
                         if ($process['process']->isRunning()) {
                             $this->logger->info('Process has exceeded deadline timeout. Killing', [
                                 'pid' => $pid,

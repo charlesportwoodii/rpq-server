@@ -12,6 +12,7 @@ use RPQ\Client;
 use RPQ\Queue;
 use RPQ\Server\Process\Handler\JobHandler;
 use RPQ\Server\Process\Handler\SignalHandler;
+use Throwable;
 
 /**
  * Dispatcher polls Redis for new jobs, and then starts the requested job
@@ -66,10 +67,30 @@ final class Dispatcher
      */
     private $isRunning = true;
 
-    /**
-     * @var bool $isWaiting;
-     */
-    private $isWaiting = false;
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    public function getClient()
+    {
+        return $this->client;
+    }
+
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    public function getQueue()
+    {
+        return $this->queue;
+    }
+
+    public function getArgs()
+    {
+        return $this->args;
+    }
 
     /**
      * Constructor
@@ -80,18 +101,16 @@ final class Dispatcher
      */
     public function __construct(Client $client, Logger $logger, Queue $queue, array $config = [], array $args = [])
     {
+        if (\function_exists('pcntl_async_signals')) {
+            \pcntl_async_signals(true);
+        }
+
         $this->client = $client;
         $this->config = $config;
         $this->args = $args;
         $this->logger = $logger;
         $this->queue = $queue;
-        $this->signalHandler = new SignalHandler(
-            $this->logger,
-            $this->client,
-            $this->config,
-            $this->queue,
-            $this->args
-        );
+        $this->signalHandler = new SignalHandler($this);
         $this->jobHandler = new JobHandler(
             $this->client, 
             $this->logger,
@@ -99,9 +118,22 @@ final class Dispatcher
         );
     }
 
+    /**
+     * Retrieves a list of running processes
+     * @return array
+     */
     public function getProcesses()
     {
         return $this->processes;
+    }
+
+    /**
+     * Sets the running status
+     * @param boolean $status
+     */
+    public function setIsRunning($status = true)
+    {
+        $this->isRunning = $status;
     }
 
     /**
@@ -115,43 +147,9 @@ final class Dispatcher
                 'queue' => $this->queue->getName()
             ]);
             
-            // Register signal handling
-            foreach ($this->signalHandler->getSignals() as $signal) {
-                $this->logger->debug('Registering signal', [
-                    'signal' => $signal
-                ]);
-
-                Loop::onSignal($signal, function($signalId) use ($signal) {
-                    Loop::disable($signalId);
-                    $this->isRunning = false;
-                    $this->isWaiting = true;
-
-                    $promise = $this->signalHandler->handle($this, $signal);
-                    $result = \Amp\Promise\wait($promise);
-
-                    if ($result === null || $result === 0) {
-                        $this->isWaiting = false;
-                    } else {
-                        $this->isRunning = true;
-                        $this->isWaiting = false;
-                    }
-                    Loop::enable($signalId);
-                });
-            }
-            
-            // Main polling loop
-            Loop::repeat($msInterval = $this->config['poll_interval'], function ($watcherId, $callback) {
-                // If a signal has been recieved to stop running, allow the process pool to drain completely before shutting down
+            $this->setIsRunning(false);
+            Loop::repeat($this->config['poll_interval'], function ($watcherId, $callback) {
                 if (!$this->isRunning) {
-                    Loop::disable($watcherId);
-                    Loop::delay($msDelay = 1000, function() use ($watcherId) {
-                        if (count($this->processes) === 0 && $this->isWaiting === false) {
-                            Loop::cancel($watcherId);
-                            exit(0);
-                        }
-                        
-                        Loop::enable($watcherId);
-                    });
                     return;
                 }
 
@@ -213,6 +211,34 @@ final class Dispatcher
                     unset($this->processes[$pid]);
                 }
             });
+
+            $this->registerSignals();
         });
+    }
+
+    private function registerSignals()
+    {
+        foreach ($this->signalHandler->getSignals() as $signal) {
+            $this->logger->debug('Registering signal', [
+                'signal' => $signal
+            ]);
+
+            Loop::onSignal($signal, function($signalId, $signal) {
+                $promise = $this->signalHandler->handle($signal);
+                $promise->onResolve(function($error, $value) {
+                    if ($error) {
+                        $this->logger->info($error->getMessage());
+                        return;
+                    }
+
+                    if ($value === null) {
+                        $this->logger->info('Signal successfully handled. RPQ is now shutting down. Goodbye.');
+                        exit(0);
+                    }
+                });
+            });
+        }
+
+        $this->setIsRunning(true);
     }
 }
