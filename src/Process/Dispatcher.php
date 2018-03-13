@@ -181,7 +181,7 @@ final class Dispatcher
                     $process->start();
                     
                     // Grab the PID and push it onto the process stack
-                    $pid = yield $process->getPid();
+                    $pid = $process->getPid();
                     $this->logger->info('Started worker', [
                         'pid' => $pid,
                         'command' => $command,
