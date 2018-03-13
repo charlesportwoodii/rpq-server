@@ -12,8 +12,9 @@ use RPQ\Server\Process\Dispatcher as ProcessDispatcher;
 
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -32,8 +33,11 @@ final class QueueCommand extends AbstractCommand
         $this->setName('queue')
             ->setHidden(true)
             ->setDescription('Initializes a new queue processor')
-            ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file')
-            ->addOption('name', null, InputOption::VALUE_OPTIONAL, 'The queue name to work with. Defaults to `default`.');
+            ->setDefinition(new InputDefinition([
+                new InputOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file'),
+                new InputOption('t', 't', InputOption::VALUE_NONE, 'Test configuration and exit'),
+                new InputOption('name', null, InputOption::VALUE_OPTIONAL, 'The queue name to work with. Defaults to `default`.'),
+            ]));
     }
 
     /**
@@ -47,8 +51,13 @@ final class QueueCommand extends AbstractCommand
         if (!parent::execute($input, $output)) {
             return 1;
         }
+
+        // If the self-test was called, immediately return
+        if ($input->getOption('t') === true) {
+            return 0;
+        }
         
-        \file_put_contents($this->config['pid'], getmypid());
+        \file_put_contents($this->config['pid'], \getmypid());
 
         $this->startProcessQueue();
     }

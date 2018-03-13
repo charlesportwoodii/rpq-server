@@ -11,26 +11,27 @@ $paths = [
 ];
 
 foreach ($paths as $path) {
-    if (file_exists($path)) {
+    if (\file_exists($path)) {
         require_once $path;
         break;
     }
 }
 
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\CommandLoader\FactoryCommandLoader;
 use RPQ\Server\Command\QueueCommand;
 use RPQ\Server\Command\ProcessWorkerCommand;
 
 $version = 'dev';
 if (\file_exists('.git/refs/heads/master')) {
-    $version = \file_get_contents(sprintf('.git/refs/heads/%s', 'master'));
+    $version = \file_get_contents(\sprintf('.git/refs/heads/%s', 'master'));
 }
 
 $app = new Application('rpq', $version);
-$queueCommand = new QueueCommand;
-$workerCommand = new ProcessWorkerCommand;
+$commandLoader = new FactoryCommandLoader(array(
+    'queue' => function () { return new QueueCommand; },
+    'worker/process' => function () { return new ProcessWorkerCommand; }
+));
 
-$app->add($workerCommand);
-$app->add($queueCommand);
-$app->setDefaultCommand($queueCommand->getName());
+$app->setCommandLoader($commandLoader);
 $app->run();

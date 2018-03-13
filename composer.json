@@ -16,12 +16,14 @@
     "require": {
         "php": "^7.1",
         "ext-redis": "^3.1.0",
-        "amphp/amp": "^2.0.2",
-        "symfony/console": "^3.3",
+        "ext-pcntl": "*",
+        "amphp/amp": "^2.0",
+        "amphp/process": "^v0.3",
+        "symfony/console": "^4.0",
+        "symfony/yaml": "^4.0",
         "rpq/client": "dev-master",
-        "symfony/yaml": "^3.3",
-        "amphp/process": "^v0.2.1",
-        "monolog/monolog": "^1.23"
+        "monolog/monolog": "^1.23",
+        "symfony/process": "^4.0"
     },
     "bin": [ "rpq" ]
 }

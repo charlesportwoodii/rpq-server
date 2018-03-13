@@ -75,11 +75,12 @@ abstract class AbstractCommand extends Command
         }
         
         $this->redis = new Redis;
-        $this->redis->pconnect($this->config['redis']['host'], $this->config['redis']['port']);
+        $this->redis->connect($this->config['redis']['host'], $this->config['redis']['port']);
+        $this->redis->echo('Hello RPQ');
         $this->client = new Client($this->redis, $this->config['redis']['namespace']);
         $this->queue = $this->client->getQueue($input->getOption('name') ?? 'default');
 
-        defined('LOGGER_APP_NAME') or define('LOGGER_APP_NAME', 'rpq');
+        defined('LOGGER_APP_NAME') or define('LOGGER_APP_NAME', 'rpq.' . \bin2hex(random_bytes(4)));
         
         // If a default logger configuration isn't set, pipe data to stdout
         if (
