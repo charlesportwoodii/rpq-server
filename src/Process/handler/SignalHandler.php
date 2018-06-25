@@ -248,7 +248,7 @@ final class SignalHandler
             return $code === 0;
         }
 
-        return $process->getPid();
+        return yield $process->getPid();
     }
 
     /**
