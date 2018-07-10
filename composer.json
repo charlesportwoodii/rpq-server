@@ -21,7 +21,7 @@
         "amphp/process": "^v0.3",
         "symfony/console": "^4.0",
         "symfony/yaml": "^4.0",
-        "rpq/client": "dev-master",
+        "rpq/client": "^0.1.0",
         "monolog/monolog": "^1.23",
         "symfony/process": "^4.0"
     },
