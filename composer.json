@@ -15,15 +15,15 @@
     },
     "require": {
         "php": "^7.1",
-        "ext-redis": "^3.1.0",
+        "ext-redis": "^3.1.2 || ^4.0.2",
         "ext-pcntl": "*",
         "amphp/amp": "^2.0",
         "amphp/process": "^v0.3",
         "symfony/console": "^4.0",
-        "symfony/yaml": "^4.0",
-        "rpq/client": "^0.1.0",
+        "symfony/yaml": "^4.1",
+        "rpq/client": "^0.1.1",
         "monolog/monolog": "^1.23",
-        "symfony/process": "^4.0"
+        "symfony/process": "^4.1"
     },
     "bin": [ "rpq" ]
 }
