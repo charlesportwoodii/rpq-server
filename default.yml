@@ -38,3 +38,6 @@ queue:
     poll_interval: 100
     # When SIGQUIT is set to the process, how much time to allow a process to shutdown before forcefully killing it
     deadline_timeout: 10
+    # Number of seconds failed jobs should be backed off before attempting again.
+    # This can help avoid excessive CPU usaging when a stuck job without a retry limit fails repeatedly
+    failed_job_backoff_time: 10

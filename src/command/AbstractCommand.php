@@ -83,8 +83,7 @@ abstract class AbstractCommand extends Command
         defined('LOGGER_APP_NAME') or define('LOGGER_APP_NAME', 'rpq.' . \bin2hex(random_bytes(4)));
 
         // If a default logger configuration isn't set, pipe data to stdout
-        if (
-            !isset($this->config['log']['logger']) ||
+        if (!isset($this->config['log']['logger']) ||
             !\file_exists($this->config['log']['logger'])
         ) {
             $this->logger = new Logger(LOGGER_APP_NAME);

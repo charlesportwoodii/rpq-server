@@ -7,6 +7,8 @@ services:
       - redis:redis
     volumes:
       - ${PWD-.}:/var/www
+    entrypoint: >
+      bash -lc "/root/.bin/composer install -ovna; ./rpq queue -c /var/www/default.yml"
   redis:
     image: redis:4.0-alpine
     ports:

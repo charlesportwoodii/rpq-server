@@ -87,5 +87,7 @@ final class QueueCommand extends AbstractCommand
      * @todo: Document + implement
      * @return void
      */
-    private function startStreamQueue() {}
+    private function startStreamQueue()
+    {
+    }
 }

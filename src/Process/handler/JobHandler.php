@@ -45,9 +45,10 @@ final class JobHandler
      * @param int $pid
      * @param int $code
      * @param bool $forceRetry
+     * @param int $queueBackoffTime
      * @return void
      */
-    public function exit($id, $pid, $code, $forceRetry = false)
+    public function exit($id, $pid, $code, $forceRetry = false, $queueBackoffTime = null)
     {
         $this->logger->info('Job ended', [
             'exitCode' => $code,
@@ -79,7 +80,7 @@ final class JobHandler
                 'queue' => $this->queue->getName()
             ]);
 
-            return $this->client->getRedis()->hdel($id);
+            return $job->end();
         } else {
             $retry = $job->getRetry();
 
@@ -93,18 +94,12 @@ final class JobHandler
                     'exitCode' => $code,
                     'pid' => $pid,
                     'jobId' => $job->getId(),
-                    'queue' => $this->queue->getName()
+                    'queue' => $this->queue->getName(),
+                    'time' => \time() + $queueBackoffTime ?? 0
                 ]);
 
                 // If a retry is specified, repush the job back onto the queue with the same Job ID
-                return $this->queue->push(
-                    $job->getWorkerClass(),
-                    $job->getArgs(),
-                    \gettype($retry) === 'boolean' ? (bool)$retry : (int)($retry - 1),
-                    (float)$job->getPriority(),
-                    null,
-                    $job->getId()
-                );
+                return $job->retry($queueBackoffTime);
             } else {
                 $this->logger->info('Job failed', [
                     'exitCode' => $code,
@@ -113,7 +108,7 @@ final class JobHandler
                     'queue' => $this->queue->getName()
                 ]);
 
-                return $this->client->getRedis()->del($job->getId());
+                return $job->fail();
             }
         }
 

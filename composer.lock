@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "753418d0d826691b08013464a749c2d8",
+    "content-hash": "42dba962c8961fe0d31a88e5ab50c8dc",
     "packages": [
         {
             "name": "amphp/amp",
@@ -450,16 +450,16 @@
         },
         {
             "name": "rpq/client",
-            "version": "0.1.1",
+            "version": "0.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/charlesportwoodii/rpq-client.git",
-                "reference": "2b0b9227056db1e642cccc9a5a91b8af34503587"
+                "reference": "9419cfe5c30d35ea54ce8faba7545daea2312e0f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/charlesportwoodii/rpq-client/zipball/2b0b9227056db1e642cccc9a5a91b8af34503587",
-                "reference": "2b0b9227056db1e642cccc9a5a91b8af34503587",
+                "url": "https://api.github.com/repos/charlesportwoodii/rpq-client/zipball/9419cfe5c30d35ea54ce8faba7545daea2312e0f",
+                "reference": "9419cfe5c30d35ea54ce8faba7545daea2312e0f",
                 "shasum": ""
             },
             "require": {
@@ -487,7 +487,7 @@
                 }
             ],
             "description": "Redis Priority Queue Client implementation in pure PHP",
-            "time": "2018-07-19T19:42:21+00:00"
+            "time": "2019-03-08T20:55:30+00:00"
         },
         {
             "name": "symfony/console",

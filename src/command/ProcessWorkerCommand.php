@@ -30,7 +30,7 @@ final class ProcessWorkerCommand extends AbstractCommand
                 new InputOption('config', 'c', InputOption::VALUE_REQUIRED, 'A YAML configuration file'),
                 new InputOption('jobId', null, InputOption::VALUE_REQUIRED, 'A Job UUID'),
                 new InputOption('name', null, InputOption::VALUE_REQUIRED, 'The queue name to work with. Defaults to `default`.'),
-            ]));
+             ]));
     }
 
     /**

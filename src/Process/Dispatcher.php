@@ -67,26 +67,41 @@ final class Dispatcher
      */
     private $isRunning = true;
 
+    /**
+     * @return Logger
+     */
     public function getLogger()
     {
         return $this->logger;
     }
 
+    /**
+     * @return Client
+     */
     public function getClient()
     {
         return $this->client;
     }
 
+    /**
+     * @return array
+     */
     public function getConfig()
     {
         return $this->config;
     }
 
+    /**
+     * @return Queue
+     */
     public function getQueue()
     {
         return $this->queue;
     }
 
+    /**
+     * @return array
+     */
     public function getArgs()
     {
         return $this->args;
@@ -154,7 +169,7 @@ final class Dispatcher
                 }
 
                 // Pushes scheduled jobs onto the main queue
-                $this->queue->rescheduleJobs($this->queue->getName(), (string)time());
+                $this->queue->rescheduleJobs();
 
                 // Only allow `max_jobs` to run
                 if (count($this->processes) === $this->config['max_jobs']) {
@@ -208,7 +223,14 @@ final class Dispatcher
                     // When the job is done, it will emit an exit status code
                     $code = yield $process->join();
 
-                    $this->jobHandler->exit($job->getId(), $pid, $code);
+                    $this->jobHandler->exit(
+                        $job->getId(),
+                        $pid,
+                        $code,
+                        false,
+                        $this->config['failed_job_backoff_time']
+                    );
+
                     unset($this->processes[$pid]);
                 }
             });
@@ -217,6 +239,11 @@ final class Dispatcher
         });
     }
 
+    /**
+     * Registers signals
+     *
+     * @return void
+     */
     private function registerSignals()
     {
         foreach ($this->signalHandler->getSignals() as $signal) {

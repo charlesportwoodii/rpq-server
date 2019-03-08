@@ -28,12 +28,12 @@ abstract class AbstractJob
         $this->id = $id;
 
         if (extension_loaded('pcntl')) {
-            pcntl_signal(SIGTERM, function($signal) {
+            pcntl_signal(SIGTERM, function ($signal) {
                 if (\method_exists(static::class, 'shutdown')) {
                     $handled = $this->shutdown();
                     if ($handled === true) {
                         exit(0);
-                    } else if ($handled === false) {
+                    } elseif ($handled === false) {
                         exit(3);
                     }
                 }
@@ -50,7 +50,9 @@ abstract class AbstractJob
      * @param array $args
      * @return int
      */
-    public function perform(array $args = []): int {}
+    public function perform(array $args = []): int
+    {
+    }
 
     /**
      * Shutdown handler. By default this does nothing.
