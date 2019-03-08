@@ -56,7 +56,7 @@ final class QueueCommand extends AbstractCommand
         if ($input->getOption('t') === true) {
             return 0;
         }
-        
+
         \file_put_contents($this->config['pid'], \getmypid());
 
         $this->startProcessQueue();

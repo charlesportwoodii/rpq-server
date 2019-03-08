@@ -81,7 +81,6 @@ final class JobHandler
 
             return $this->client->getRedis()->hdel($id);
         } else {
-
             $retry = $job->getRetry();
 
             // If force retry was specified, force this job to retry indefinitely
@@ -103,7 +102,7 @@ final class JobHandler
                     $job->getArgs(),
                     \gettype($retry) === 'boolean' ? (bool)$retry : (int)($retry - 1),
                     (float)$job->getPriority(),
-                    null, 
+                    null,
                     $job->getId()
                 );
             } else {

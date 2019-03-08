@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   php:
-    image: charlesportwoodii/php:7.2
+    image: charlesportwoodii/php:7.3
     working_dir: /var/www
     links:
       - redis:redis

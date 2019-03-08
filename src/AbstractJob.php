@@ -26,7 +26,7 @@ abstract class AbstractJob
     {
         $this->client = $client;
         $this->id = $id;
-        
+
         if (extension_loaded('pcntl')) {
             pcntl_signal(SIGTERM, function($signal) {
                 if (\method_exists(static::class, 'shutdown')) {

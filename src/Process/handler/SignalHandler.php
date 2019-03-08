@@ -21,7 +21,7 @@ final class SignalHandler
      * @var Client $client
      */
     private $client;
-    
+
     /**
      * @var Logger $this->logger
      */
@@ -87,7 +87,7 @@ final class SignalHandler
             $this->queue
         );
     }
-    
+
     /**
      * Returns signals that should be handled
      * @return array
@@ -149,17 +149,17 @@ final class SignalHandler
         $this->logger->info('This signal is reserved for future use.');
         return true;
     }
-    
+
     /**
      * Fast Shutdown
-     * 
+     *
      * Send CTRL^C (SIGINT) or SIGTERM to initiate a fast shutdown of RPQ
      * During fast shutdown, RPQ will send a SIGKILL signal to all child processes
      * Then push them back onto the priority queue before exiting.
-     * 
+     *
      * This may result in jobs being reprocessed, as the jobs will not have
      * an opportunity to cleanly exit and shutdown themselves.
-     * 
+     *
      * @return null
      */
     private function terminate()
@@ -175,10 +175,10 @@ final class SignalHandler
      * Send a SIGQUIT to intiate a graceful shutdown of RPQ and all child processes.
      * During graceful shutdown, RPQ will send a SIGTERM signal to all child processes
      * and allow them to opportunity to either finish working, or to cleanly shutdown themselves.
-     * 
+     *
      * Jobs that do not complete, or return a non-zero exit status code will be requeued.
      * Jobs that do complete will not be requeued.
-     * 
+     *
      * @return null
      */
     private function quit()
@@ -190,11 +190,11 @@ final class SignalHandler
 
     /**
      * Graceful reload
-     * 
+     *
      * Runs a self test to verify that the new RPQ configuration is valid.
      * If the configuration is valid, RPQ will spawn a new RPQ instance to begin job processing
      * If the configuration is not valid, RPQ will report the error and will continue processing jobs
-     * 
+     *
      * @return integer
      */
     private function reload()
@@ -218,14 +218,15 @@ final class SignalHandler
 
     /**
      * Executes a self test by running `./rpq queue -t -c <config_file>.
-     * This method is blocking until the self test finishes, and the 
+     * This method is blocking until the self test finishes, and the
      * self test will be run within a separate process space.
-     * 
+     *
      * @return mixed
      */
     private function spawnRpqInstance($withTest = false)
     {
-        $command = sprintf('%s queue -c %s',
+        $command = sprintf(
+            '%s queue -c %s',
             $_SERVER["SCRIPT_FILENAME"],
             $this->args['configFile']
         );
@@ -260,7 +261,7 @@ final class SignalHandler
     private function shutdown($signal = 9)
     {
         // Iterate through all the existing processes, and send the appropriate signal to the process
-        foreach($this->dispatcher->getProcesses() as $pid => $process) {
+        foreach ($this->dispatcher->getProcesses() as $pid => $process) {
             $this->logger->debug('Sending signal to process', [
                 'signal' => $signal,
                 'pid' => $pid,
@@ -278,14 +279,14 @@ final class SignalHandler
             // If a signal other than SIGKILL was sent to the process, create a deadline timeout and force kill the process if it's still alive after the deadline
             if ($signal !== 9) {
                 if ($this->config['deadline_timeout'] !== null) {
-                    Loop::delay(((int)$this->config['deadline_timeout'] * 1000), function($watcherId, $callback) use ($process, $pid) {
+                    Loop::delay(((int)$this->config['deadline_timeout'] * 1000), function ($watcherId, $callback) use ($process, $pid) {
                         if ($process['process']->isRunning()) {
                             $this->logger->info('Process has exceeded deadline timeout. Killing', [
                                 'pid' => $pid,
                                 'jobId' => $process['id'],
                                 'queue' => $this->queue->getName()
                             ]);
-                            
+
                             // Send SIGKILL to the process
                             \posix_kill($pid, SIGKILL);
                         }

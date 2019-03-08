@@ -73,7 +73,7 @@ abstract class AbstractCommand extends Command
             $output->writeln("Unable to parse the YAML string: %s", $e->getMessage());
             return false;
         }
-        
+
         $this->redis = new Redis;
         $this->redis->connect($this->config['redis']['host'], $this->config['redis']['port']);
         $this->redis->echo('Hello RPQ');
@@ -81,10 +81,10 @@ abstract class AbstractCommand extends Command
         $this->queue = $this->client->getQueue($input->getOption('name') ?? 'default');
 
         defined('LOGGER_APP_NAME') or define('LOGGER_APP_NAME', 'rpq.' . \bin2hex(random_bytes(4)));
-        
+
         // If a default logger configuration isn't set, pipe data to stdout
         if (
-            !isset($this->config['log']['logger']) || 
+            !isset($this->config['log']['logger']) ||
             !\file_exists($this->config['log']['logger'])
         ) {
             $this->logger = new Logger(LOGGER_APP_NAME);

@@ -112,7 +112,7 @@ final class Dispatcher
         $this->queue = $queue;
         $this->signalHandler = new SignalHandler($this);
         $this->jobHandler = new JobHandler(
-            $this->client, 
+            $this->client,
             $this->logger,
             $this->queue
         );
@@ -146,7 +146,7 @@ final class Dispatcher
             $this->logger->info(sprintf("RPQ is now started, and is listening for new jobs every %d ms", $this->config['poll_interval']), [
                 'queue' => $this->queue->getName()
             ]);
-            
+
             $this->setIsRunning(false);
             Loop::repeat($this->config['poll_interval'], function ($watcherId, $callback) {
                 if (!$this->isRunning) {
@@ -166,7 +166,8 @@ final class Dispatcher
 
                 if ($job !== null) {
                     // Spawn a new worker process to handle the job
-                    $command = sprintf('exec %s %s --jobId=%s --name=%s',
+                    $command = sprintf(
+                        'exec %s %s --jobId=%s --name=%s',
                         ($this->config['process']['script'] ?? $_SERVER["SCRIPT_FILENAME"]),
                         $this->config['process']['command'],
                         $job->getId(),
@@ -175,11 +176,11 @@ final class Dispatcher
 
                     if ($this->config['process']['config'] === true) {
                         $command .= " --config={$this->args['configFile']}";
-                    }              
+                    }
 
                     $process = new Process($command);
                     $process->start();
-                    
+
                     // Grab the PID and push it onto the process stack
                     $pid = yield $process->getPid();
                     $this->logger->info('Started worker', [
@@ -206,7 +207,7 @@ final class Dispatcher
 
                     // When the job is done, it will emit an exit status code
                     $code = yield $process->join();
-                    
+
                     $this->jobHandler->exit($job->getId(), $pid, $code);
                     unset($this->processes[$pid]);
                 }
@@ -223,9 +224,9 @@ final class Dispatcher
                 'signal' => $signal
             ]);
 
-            Loop::onSignal($signal, function($signalId, $signal) {
+            Loop::onSignal($signal, function ($signalId, $signal) {
                 $promise = $this->signalHandler->handle($signal);
-                $promise->onResolve(function($error, $value) {
+                $promise->onResolve(function ($error, $value) {
                     if ($error) {
                         $this->logger->info($error->getMessage());
                         return;
